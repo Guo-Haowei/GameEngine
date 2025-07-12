@@ -62,14 +62,14 @@ const IAsset* AssetRegistry::GetAssetByHandle(const std::string& p_handle) {
         return nullptr;
     }
 
-    return it->second->asset;
+    return it->second->asset.get();
 }
 
 void AssetRegistry::GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out) {
     std::lock_guard gurad(m_lock);
     for (auto& it : m_handles) {
         if (it->asset && it->asset->type == p_type) {
-            p_out.emplace_back(it->asset);
+            p_out.emplace_back(it->asset.get());
         }
     }
 }
@@ -107,13 +107,13 @@ auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
         //     CRASH_NOW_MSG(error);
         // }
 #endif
-        return it->second->asset;
+        return it->second->asset.get();
     }
 
-    auto stub = new AssetRegistryHandle(std::move(meta));
+    auto stub = new AssetEntry(std::move(meta));
 
     m_lookup[p_path] = stub;
-    m_handles.emplace_back(std::unique_ptr<AssetRegistryHandle>(stub));
+    m_handles.emplace_back(std::unique_ptr<AssetEntry>(stub));
 
     switch (p_mode) {
         case AssetRegistry::LOAD_ASYNC: {
@@ -130,7 +130,7 @@ auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
             break;
     }
 
-    return stub->asset;
+    return stub->asset.get();
 }
 
 void AssetRegistry::RegisterAssets(int p_count, AssetMetaData* p_metas) {
@@ -145,10 +145,10 @@ void AssetRegistry::RegisterAssets(int p_count, AssetMetaData* p_metas) {
             return;
         }
 
-        auto stub = new AssetRegistryHandle(std::move(p_metas[i]));
+        auto stub = new AssetEntry(std::move(p_metas[i]));
 
         m_lookup[handle] = stub;
-        m_handles.emplace_back(std::unique_ptr<AssetRegistryHandle>(stub));
+        m_handles.emplace_back(std::unique_ptr<AssetEntry>(stub));
     }
 }
 

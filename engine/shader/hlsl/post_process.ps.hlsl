@@ -17,7 +17,8 @@ static const float3x3 sy = float3x3(
     2.0, 0.0, -2.0,
     1.0, 0.0, -1.0);
 
-float4 main(VS_OUTPUT_UV input) : SV_TARGET {
+float4 main(VS_OUTPUT_UV input)
+    : SV_TARGET {
     float2 uv = input.uv;
     // flip uv
     // uv.y = 1 - uv.y;

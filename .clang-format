@@ -45,3 +45,6 @@ BreakBeforeBraces: Custom
 AlignAfterOpenBracket: true
 # SortIncludes: true
 SortIncludes: Never
+
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BreakConstructorInitializers: BeforeComma

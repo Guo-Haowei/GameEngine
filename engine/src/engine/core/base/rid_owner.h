@@ -57,8 +57,7 @@ protected:
 #endif
 
     RIDAllocatorBase(uint32_t element_size, uint32_t elements_in_chunk)
-        : m_element_size(element_size),
-          m_elements_in_chunk(elements_in_chunk) {
+        : m_element_size(element_size), m_elements_in_chunk(elements_in_chunk) {
     }
 
     [[nodiscard]] RID allocate_rid_internal();

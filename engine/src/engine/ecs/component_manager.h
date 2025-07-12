@@ -55,9 +55,7 @@ class ComponentManagerIterator {
 
 public:
     ComponentManagerIterator(std::vector<Entity>& p_entity_array, std::vector<T>& p_component_array, size_t p_index)
-        : m_entityArray(p_entity_array),
-          m_componentArray(p_component_array),
-          m_index(p_index) {}
+        : m_entityArray(p_entity_array), m_componentArray(p_component_array), m_index(p_index) {}
 
     COMPONENT_MANAGER_ITERATOR_COMMON;
 
@@ -78,9 +76,7 @@ class ComponentManagerConstIterator {
 
 public:
     ComponentManagerConstIterator(const std::vector<Entity>& p_entity_array, const std::vector<T>& p_component_array, size_t p_index)
-        : m_entityArray(p_entity_array),
-          m_componentArray(p_component_array),
-          m_index(p_index) {}
+        : m_entityArray(p_entity_array), m_componentArray(p_component_array), m_index(p_index) {}
 
     COMPONENT_MANAGER_ITERATOR_COMMON;
 

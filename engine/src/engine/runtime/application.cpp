@@ -54,7 +54,8 @@ static void RegisterRenderDvars() {
 #undef REGISTER_DVAR
 }
 
-Application::Application(const ApplicationSpec& p_spec, Type p_type) : m_specification(p_spec), m_type(p_type) {
+Application::Application(const ApplicationSpec& p_spec, Type p_type)
+    : m_specification(p_spec), m_type(p_type) {
     // select work directory
     m_userFolder = std::string{ m_specification.userFolder };
 

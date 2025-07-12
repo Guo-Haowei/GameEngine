@@ -55,7 +55,8 @@ public:
 
 class ImageAssetLoader : public IAssetLoader {
 public:
-    ImageAssetLoader(const AssetMetaData& p_meta, uint32_t p_size) : IAssetLoader(p_meta), m_size(p_size) {}
+    ImageAssetLoader(const AssetMetaData& p_meta, uint32_t p_size)
+        : IAssetLoader(p_meta), m_size(p_size) {}
 
     static std::unique_ptr<IAssetLoader> CreateLoader(const AssetMetaData& p_meta) {
         return std::make_unique<ImageAssetLoader>(p_meta, 1);

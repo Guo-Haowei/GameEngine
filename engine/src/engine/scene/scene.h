@@ -61,7 +61,8 @@ class Scene : public NonCopyable, public IAsset {
 public:
     static constexpr const char* EXTENSION = ".scene";
 
-    Scene() : IAsset(AssetType::SCENE) {}
+    Scene()
+        : IAsset(AssetType::SCENE) {}
 
 public:
     template<Serializable T>

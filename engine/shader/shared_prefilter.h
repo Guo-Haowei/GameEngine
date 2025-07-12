@@ -5,7 +5,8 @@
 void main() {
     Vector3f N = normalize(out_var_POSITION);
 #else
-float4 main(VS_OUTPUT_POSITION input) : SV_TARGET {
+float4 main(VS_OUTPUT_POSITION input)
+    : SV_TARGET {
     Vector3f N = normalize(input.world_position);
 #endif
 

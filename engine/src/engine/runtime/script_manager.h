@@ -21,8 +21,10 @@ class Scene;
 
 class ScriptManager : public Module {
 public:
-    ScriptManager() : Module("ScriptManager") {}
-    ScriptManager(std::string_view name) : Module(name) {}
+    ScriptManager()
+        : Module("ScriptManager") {}
+    ScriptManager(std::string_view name)
+        : Module(name) {}
 
     virtual void OnSimBegin(Scene&) {}
     virtual void OnSimEnd(Scene&) {}

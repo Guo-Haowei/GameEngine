@@ -32,10 +32,8 @@ struct FieldMetaBase {
     FieldMetaBase(const char* p_name,
                   const char* p_type,
                   size_t p_offset,
-                  FieldFlag p_flags) : name(p_name),
-                                       type(p_type),
-                                       offset(p_offset),
-                                       flags(p_flags) {
+                  FieldFlag p_flags)
+        : name(p_name), type(p_type), offset(p_offset), flags(p_flags) {
     }
 
     virtual ~FieldMetaBase() = default;

@@ -6,7 +6,8 @@ class Application;
 
 class Module {
 public:
-    Module(std::string_view p_name) : m_initialized(false), m_name(p_name) {}
+    Module(std::string_view p_name)
+        : m_initialized(false), m_name(p_name) {}
     virtual ~Module() = default;
 
     auto Initialize() -> Result<void>;

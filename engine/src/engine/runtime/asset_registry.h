@@ -1,25 +1,11 @@
 #pragma once
 #include "engine/assets/asset.h"
+#include "engine/assets/asset_entry.h"
 #include "engine/core/base/singleton.h"
 #include "engine/core/io/file_path.h"
 #include "engine/runtime/module.h"
 
 namespace my {
-
-struct AssetRegistryHandle {
-    enum State : uint8_t {
-        ASSET_STATE_LOADING,
-        ASSET_STATE_READY,
-    };
-
-    AssetRegistryHandle(const AssetMetaData& p_meta) : meta(p_meta),
-                                                       asset(nullptr),
-                                                       state(ASSET_STATE_LOADING) {}
-
-    AssetMetaData meta;
-    IAsset* asset;
-    std::atomic<State> state;
-};
 
 class AssetRegistry : public Singleton<AssetRegistry>, public Module {
     enum RequestMode {
@@ -28,7 +14,8 @@ class AssetRegistry : public Singleton<AssetRegistry>, public Module {
     };
 
 public:
-    AssetRegistry() : Module("AssetRegistry") {}
+    AssetRegistry()
+        : Module("AssetRegistry") {}
 
     const IAsset* GetAssetByHandle(const std::string& p_handle);
 
@@ -70,8 +57,8 @@ protected:
                           OnAssetLoadSuccessFunc p_on_success,
                           void* p_user_data) -> Result<const IAsset*>;
 
-    std::unordered_map<std::string, AssetRegistryHandle*> m_lookup;
-    std::vector<std::unique_ptr<AssetRegistryHandle>> m_handles;
+    std::unordered_map<std::string, AssetEntry*> m_lookup;
+    std::vector<std::unique_ptr<AssetEntry>> m_handles;
     std::mutex m_lock;
 };
 

@@ -7,7 +7,8 @@ class ImguiManager : public Module {
     using Callback = std::function<void()>;
 
 public:
-    ImguiManager() : Module("ImguiManager") {}
+    ImguiManager()
+        : Module("ImguiManager") {}
 
     auto InitializeImpl() -> Result<void> final;
     void FinalizeImpl() final;

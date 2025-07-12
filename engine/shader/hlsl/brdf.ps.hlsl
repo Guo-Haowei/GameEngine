@@ -3,7 +3,8 @@
 #include "pbr.hlsl.h"
 #include "shader_defines.hlsl.h"
 
-float2 main(VS_OUTPUT_UV input) : SV_TARGET {
+float2 main(VS_OUTPUT_UV input)
+    : SV_TARGET {
     Vector2f integratedBRDF = IntegrateBRDF(input.uv.x, input.uv.y);
     return integratedBRDF;
 }

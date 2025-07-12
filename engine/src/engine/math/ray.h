@@ -6,7 +6,8 @@ namespace my {
 
 class Ray {
 public:
-    Ray(const Vector3f& p_start, const Vector3f& p_end) : m_start(p_start), m_end(p_end), m_dist(1.0f) {}
+    Ray(const Vector3f& p_start, const Vector3f& p_end)
+        : m_start(p_start), m_end(p_end), m_dist(1.0f) {}
 
     Ray Inverse(const Matrix4x4f& p_inverse_matrix) const;
 

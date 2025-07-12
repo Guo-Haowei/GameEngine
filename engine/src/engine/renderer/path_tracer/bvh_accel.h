@@ -12,8 +12,8 @@ struct BvhAccel {
     using Ref = std::shared_ptr<BvhAccel>;
 
     BvhAccel(int p_index,
-             const BvhAccel* p_parent) : index(p_index),
-                                         parent(p_parent) {}
+             const BvhAccel* p_parent)
+        : index(p_index), parent(p_parent) {}
 
     void DiscoverIdx();
 

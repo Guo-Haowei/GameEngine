@@ -75,7 +75,8 @@ struct FrameData {
         Degree fovy;
     };
 
-    FrameData(const RenderOptions& p_options) : options(p_options) {
+    FrameData(const RenderOptions& p_options)
+        : options(p_options) {
     }
 
     const RenderOptions options;

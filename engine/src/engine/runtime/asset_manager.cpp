@@ -42,7 +42,7 @@ struct LoadTask {
     void* userdata;
 
     // new stuff
-    AssetRegistryHandle* handle;
+    AssetEntry* handle;
 };
 
 static struct {
@@ -82,16 +82,16 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     return Result<void>();
 }
 
-auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset*> {
+auto AssetManager::LoadAssetSync(AssetEntry* p_handle) -> Result<IAsset*> {
 #if 0
     if (thread::GetThreadId() == thread::THREAD_MAIN) {
         LOG_WARN("Loading asset '{}' on main thread, this can be an expensive operation", p_handle->meta.path);
     }
 #endif
 
-    auto loader = IAssetLoader::Create(p_handle->meta);
+    auto loader = IAssetLoader::Create(p_handle->metadata);
     if (!loader) {
-        return HBN_ERROR(ErrorCode::ERR_CANT_OPEN, "No suitable loader found for asset '{}'", p_handle->meta.path);
+        return HBN_ERROR(ErrorCode::ERR_CANT_OPEN, "No suitable loader found for asset '{}'", p_handle->metadata.path);
     }
 
     auto res = loader->Load();
@@ -107,9 +107,9 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
         asset = m_assets.back().get();
     }
 
-    p_handle->asset = asset;
-    p_handle->meta.type = asset->type;
-    p_handle->state = AssetRegistryHandle::ASSET_STATE_READY;
+    p_handle->asset = std::shared_ptr<IAsset>(asset);
+    p_handle->metadata.type = asset->type;
+    p_handle->status = AssetStatus::Loaded;
 
     if (asset->type == AssetType::IMAGE) {
         ImageAsset* image = dynamic_cast<ImageAsset*>(asset);
@@ -118,11 +118,11 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
         IGraphicsManager::GetSingleton().RequestTexture(image);
     }
 
-    LOG_VERBOSE("asset {} loaded", p_handle->meta.path);
+    LOG_VERBOSE("asset {} loaded", p_handle->metadata.path);
     return asset;
 }
 
-void AssetManager::LoadAssetAsync(AssetRegistryHandle* p_handle, OnAssetLoadSuccessFunc p_on_success, void* p_userdata) {
+void AssetManager::LoadAssetAsync(AssetEntry* p_handle, OnAssetLoadSuccessFunc p_on_success, void* p_userdata) {
     LoadTask task;
     task.handle = p_handle;
     task.onSuccess = p_on_success;
@@ -164,7 +164,7 @@ void AssetManager::WorkerMain() {
             if (task.onSuccess) {
                 task.onSuccess(asset, task.userdata);
             }
-            LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.handle->meta.path, timer.GetDurationString());
+            LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.handle->metadata.path, timer.GetDurationString());
         } else {
             StringStreamBuilder builder;
             builder << res.error();

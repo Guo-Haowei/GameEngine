@@ -11,9 +11,11 @@ public:
     static constexpr uint32_t INVALID_ID = 0;
     static constexpr uint32_t MAX_ID = ~0u;
 
-    explicit constexpr Entity() : m_id(INVALID_ID) {}
+    explicit constexpr Entity()
+        : m_id(INVALID_ID) {}
 
-    explicit constexpr Entity(uint32_t p_handle) : m_id(p_handle) {}
+    explicit constexpr Entity(uint32_t p_handle)
+        : m_id(p_handle) {}
 
     ~Entity() = default;
 

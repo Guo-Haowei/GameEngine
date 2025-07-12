@@ -46,9 +46,7 @@ public:
     // @TODO: rename to RenderTarget
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
-        : IGraphicsManager(p_name),
-          m_backend(p_backend),
-          m_frameCount(p_frame_count) {}
+        : IGraphicsManager(p_name), m_backend(p_backend), m_frameCount(p_frame_count) {}
 
     auto InitializeImpl() -> Result<void> final;
     void Update(Scene& p_scene) override;

@@ -28,9 +28,8 @@ public:
     public:
         Iterator(const ViewContainer& p_container,
                  const ComponentManager<T>& p_manager,
-                 uint32_t p_index) : m_container(p_container),
-                                     m_manager(p_manager),
-                                     m_index(p_index) {}
+                 uint32_t p_index)
+            : m_container(p_container), m_manager(p_manager), m_index(p_index) {}
 
         Self operator++(int) {
             Self tmp = *this;
@@ -79,7 +78,8 @@ public:
     };
 #pragma endregion ITERATOR
 
-    View(const ComponentManager<T>& p_manager) : m_manager(p_manager), m_size(static_cast<uint32_t>(p_manager.GetCount())) {
+    View(const ComponentManager<T>& p_manager)
+        : m_manager(p_manager), m_size(static_cast<uint32_t>(p_manager.GetCount())) {
         const int size = (int)p_manager.GetCount();
         for (int i = 0; i < size; ++i) {
             m_container.emplace_back(std::make_pair(m_manager.m_entityArray[i], i));

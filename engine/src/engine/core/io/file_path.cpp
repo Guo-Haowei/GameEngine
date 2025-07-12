@@ -2,15 +2,18 @@
 
 namespace my {
 
-FilePath::FilePath(const std::string& p_path) : m_path(p_path) {
+FilePath::FilePath(const std::string& p_path)
+    : m_path(p_path) {
     Prettify();
 }
 
-FilePath::FilePath(std::string_view p_path) : m_path(p_path) {
+FilePath::FilePath(std::string_view p_path)
+    : m_path(p_path) {
     Prettify();
 }
 
-FilePath::FilePath(const char* p_path) : m_path(p_path) {
+FilePath::FilePath(const char* p_path)
+    : m_path(p_path) {
     Prettify();
 }
 

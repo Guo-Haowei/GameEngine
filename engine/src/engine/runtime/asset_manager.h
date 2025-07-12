@@ -10,11 +10,12 @@ namespace my {
 class Scene;
 struct IAsset;
 struct LoadTask;
-struct AssetRegistryHandle;
+struct AssetEntry;
 
 class AssetManager : public Singleton<AssetManager>, public Module {
 public:
-    AssetManager() : Module("AssetManager") {}
+    AssetManager()
+        : Module("AssetManager") {}
 
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
@@ -26,9 +27,9 @@ public:
     static void RequestShutdown();
 
 private:
-    [[nodiscard]] auto LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset*>;
+    [[nodiscard]] auto LoadAssetSync(AssetEntry* p_handle) -> Result<IAsset*>;
 
-    void LoadAssetAsync(AssetRegistryHandle* p_handle,
+    void LoadAssetAsync(AssetEntry* p_handle,
                         OnAssetLoadSuccessFunc p_on_success,
                         void* p_user_data);
 

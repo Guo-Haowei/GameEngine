@@ -6,7 +6,8 @@
 
 Texture2D t_Texture0 : register(t0);
 
-float4 main(VS_OUTPUT_UV input) : SV_TARGET {
+float4 main(VS_OUTPUT_UV input)
+    : SV_TARGET {
     float4 color = t_Texture0.SampleLevel(s_linearClampSampler, input.uv, 0.0f);
 
     switch (c_displayChannel) {

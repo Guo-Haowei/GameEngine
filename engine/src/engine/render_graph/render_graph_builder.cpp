@@ -11,8 +11,7 @@
 namespace my {
 
 RenderGraphBuilder::RenderGraphBuilder(const RenderGraphBuilderConfig& p_config)
-    : m_config(p_config),
-      m_graphicsManager(IGraphicsManager::GetSingleton()) {
+    : m_config(p_config), m_graphicsManager(IGraphicsManager::GetSingleton()) {
 }
 
 RenderPassBuilder& RenderGraphBuilder::AddPass(std::string_view p_pass_name) {

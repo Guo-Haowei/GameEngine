@@ -101,7 +101,8 @@ static void ExecuteDrawCommands(const FrameData& p_data, const std::vector<Rende
 struct ScopedEvent {
     IRenderCmdContext& m_ctx;
 
-    ScopedEvent(IRenderCmdContext& p_ctx, std::string_view p_name) : m_ctx(p_ctx) {
+    ScopedEvent(IRenderCmdContext& p_ctx, std::string_view p_name)
+        : m_ctx(p_ctx) {
         m_ctx.BeginEvent(p_name);
     }
 

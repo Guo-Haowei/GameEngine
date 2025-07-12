@@ -9,7 +9,8 @@ class Scene;
 
 class RenderSystem : public Module {
 public:
-    RenderSystem() : Module("RenderSystem") {}
+    RenderSystem()
+        : Module("RenderSystem") {}
 
     void BeginFrame();
 

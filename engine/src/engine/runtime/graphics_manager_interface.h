@@ -47,7 +47,8 @@ public:
     static constexpr int NUM_BACK_BUFFERS = 2;
     static constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
 
-    IGraphicsManager(std::string_view p_name) : Module(p_name) {}
+    IGraphicsManager(std::string_view p_name)
+        : Module(p_name) {}
 
     virtual auto InitializeImpl() -> Result<void> = 0;
     virtual void Update(Scene& p_scene) = 0;

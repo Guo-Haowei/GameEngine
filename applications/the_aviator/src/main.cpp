@@ -19,7 +19,8 @@ extern Scene* CreateTheAviatorScene();
 // @TODO: stop using ImGui for rendering final image
 class TheAviatorGame : public GameLayer {
 public:
-    TheAviatorGame() : GameLayer("TheAviatorGame") {}
+    TheAviatorGame()
+        : GameLayer("TheAviatorGame") {}
 
     void OnUpdate(float p_timestep) override {
         unused(p_timestep);
@@ -34,7 +35,8 @@ public:
 
 class Game : public Application {
 public:
-    Game(const ApplicationSpec& p_spec) : Application(p_spec) {
+    Game(const ApplicationSpec& p_spec)
+        : Application(p_spec) {
         m_state = Application::State::SIM;
 
         m_gameLayer = std::make_unique<TheAviatorGame>();

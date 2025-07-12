@@ -7,7 +7,8 @@ class ReverseIterator {
     using ThisType = ReverseIterator<T, Base>;
 
 public:
-    explicit ReverseIterator(Base base) : m_base_iterator(--base) {}
+    explicit ReverseIterator(Base base)
+        : m_base_iterator(--base) {}
 
     ThisType operator++(int) {
         ThisType tmp = *this;

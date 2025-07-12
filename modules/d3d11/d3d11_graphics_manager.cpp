@@ -26,7 +26,8 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11, 1) {
+D3d11GraphicsManager::D3d11GraphicsManager()
+    : GraphicsManager("D3d11GraphicsManager", Backend::D3D11, 1) {
     m_pipelineStateManager = std::make_shared<D3d11PipelineStateManager>();
 }
 

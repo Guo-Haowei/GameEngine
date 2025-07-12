@@ -39,7 +39,8 @@
 
 namespace my {
 
-CommonOpenGLGraphicsManager::CommonOpenGLGraphicsManager() : GraphicsManager("CommonOpenGLGraphicsManager", Backend::OPENGL, 1) {
+CommonOpenGLGraphicsManager::CommonOpenGLGraphicsManager()
+    : GraphicsManager("CommonOpenGLGraphicsManager", Backend::OPENGL, 1) {
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
 

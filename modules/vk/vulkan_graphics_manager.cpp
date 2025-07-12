@@ -344,7 +344,8 @@ static void FramePresent(ImGui_ImplVulkanH_Window* wd) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VulkanGraphicsManager::VulkanGraphicsManager() : GraphicsManager("VulkanGraphicsManager", Backend::VULKAN, NUM_FRAMES_IN_FLIGHT) {
+VulkanGraphicsManager::VulkanGraphicsManager()
+    : GraphicsManager("VulkanGraphicsManager", Backend::VULKAN, NUM_FRAMES_IN_FLIGHT) {
     m_pipelineStateManager = std::make_shared<EmptyPipelineStateManager>();
 }
 

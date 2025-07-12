@@ -77,8 +77,8 @@ public:
     InputEventMouseWheel(const MouseButtonArray& p_buttons,
                          const MouseButtonArray& p_prevButtons,
                          const Vector2f& p_pos,
-                         const Vector2f& p_scroll) : InputEventMouse(p_buttons, p_prevButtons, p_pos),
-                                                     m_scroll(p_scroll) {}
+                         const Vector2f& p_scroll)
+        : InputEventMouse(p_buttons, p_prevButtons, p_pos), m_scroll(p_scroll) {}
 
     float GetWheelX() const { return m_scroll.x; }
     float GetWheelY() const { return m_scroll.y; }
@@ -92,7 +92,8 @@ public:
     InputEventMouseMove(const MouseButtonArray& p_buttons,
                         const MouseButtonArray& p_prevButtons,
                         const Vector2f& p_pos,
-                        const Vector2f& p_prev_pos) : InputEventMouse(p_buttons, p_prevButtons, p_pos), m_prevPos(p_prev_pos) {}
+                        const Vector2f& p_prev_pos)
+        : InputEventMouse(p_buttons, p_prevButtons, p_pos), m_prevPos(p_prev_pos) {}
 
     const Vector2f& GetPrevPos() const { return m_prevPos; }
     const Vector2f GetDelta() const { return m_pos - m_prevPos; }

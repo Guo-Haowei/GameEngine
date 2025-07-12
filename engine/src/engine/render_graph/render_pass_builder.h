@@ -47,7 +47,8 @@ public:
     std::string_view GetName() const { return m_name; }
 
 private:
-    RenderPassBuilder(std::string_view p_name) : m_name{ p_name } {}
+    RenderPassBuilder(std::string_view p_name)
+        : m_name{ p_name } {}
 
     std::string m_name;
     std::vector<std::pair<std::string, RenderGraphResourceCreateInfo>> m_creates;

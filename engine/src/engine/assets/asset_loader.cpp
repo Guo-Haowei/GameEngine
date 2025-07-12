@@ -10,7 +10,8 @@
 
 namespace my {
 
-IAssetLoader::IAssetLoader(const AssetMetaData& p_meta) : m_meta(p_meta) {
+IAssetLoader::IAssetLoader(const AssetMetaData& p_meta)
+    : m_meta(p_meta) {
     m_filePath = m_meta.path;
     std::filesystem::path system_path{ m_filePath };
     m_fileName = system_path.filename().string();

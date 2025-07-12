@@ -17,7 +17,8 @@ enum class AssetType : uint8_t {
 };
 
 struct IAsset {
-    IAsset(AssetType p_type) : type(p_type) {}
+    IAsset(AssetType p_type)
+        : type(p_type) {}
     virtual ~IAsset() = default;
 
     const AssetType type;
@@ -26,19 +27,22 @@ struct IAsset {
 using OnAssetLoadSuccessFunc = void (*)(IAsset* p_asset, void* p_userdata);
 
 struct BufferAsset : IAsset {
-    BufferAsset() : IAsset(AssetType::BUFFER) {}
+    BufferAsset()
+        : IAsset(AssetType::BUFFER) {}
 
     std::vector<char> buffer;
 };
 
 struct TextAsset : IAsset {
-    TextAsset() : IAsset(AssetType::TEXT) {}
+    TextAsset()
+        : IAsset(AssetType::TEXT) {}
 
     std::string source;
 };
 
 struct ImageAsset : IAsset {
-    ImageAsset() : IAsset(AssetType::IMAGE) {}
+    ImageAsset()
+        : IAsset(AssetType::IMAGE) {}
 
     PixelFormat format = PixelFormat::UNKNOWN;
     int width = 0;

@@ -7,7 +7,8 @@ class Application;
 
 class Layer : public NonCopyable {
 public:
-    Layer(std::string_view p_name) : m_name(p_name) {}
+    Layer(std::string_view p_name)
+        : m_name(p_name) {}
     virtual ~Layer() = default;
 
     virtual void OnAttach() {}

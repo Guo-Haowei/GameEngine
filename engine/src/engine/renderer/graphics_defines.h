@@ -163,7 +163,8 @@ enum class PrimitiveTopology : uint8_t {
 };
 
 struct Viewport {
-    Viewport(int p_width, int p_height) : width(p_width), height(p_height), topLeftX(0), topLeftY(0) {}
+    Viewport(int p_width, int p_height)
+        : width(p_width), height(p_height), topLeftX(0), topLeftY(0) {}
 
     int width;
     int height;
