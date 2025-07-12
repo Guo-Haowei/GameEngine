@@ -142,6 +142,24 @@ void AssetManager::CreateAsset(const AssetType& p_type,
     m_app->GetAssetRegistry()->StartAsyncLoad(std::move(meta), nullptr, nullptr);
 }
 
+auto AssetManager::MoveAsset(const std::filesystem::path& p_old, const std::filesystem::path& p_new) -> Result<void> {
+    auto meta_path_str = std::format("{}.meta", p_old.string());
+    fs::path old_meta{ meta_path_str };
+
+    meta_path_str = std::format("{}.meta", p_new.string());
+    fs::path new_meta{ meta_path_str };
+
+    auto new_path = ResolvePath(p_new);
+    try {
+        fs::rename(old_meta, new_meta);
+        fs::rename(p_old, p_new);
+    } catch (const fs::filesystem_error& e) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_NO_PERMISSION, "{}", e.what());
+    }
+
+    return Result<void>();
+}
+
 std::string AssetManager::ResolvePath(const fs::path& p_path) {
     fs::path relative = fs::relative(p_path, m_assets_root);
     return std::format("@res://{}", relative.generic_string());

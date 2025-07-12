@@ -112,11 +112,8 @@ void FileSystemPanel::ListFile(const std::filesystem::path& p_path, const char* 
         if (ImGui::InputText("###rename", buffer.data(), buffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
             fs::path to_path = m_renaming.parent_path();
             to_path = to_path / buffer.c_str();
-            try {
-                fs::rename(m_renaming, to_path);
-            } catch (const fs::filesystem_error& ) {
-                LOG_ERROR("failed to rename from '{}' to '{}'", m_renaming.string(), to_path.string());
-            }
+
+            m_editor.GetApplication()->GetAssetManager()->MoveAsset(m_renaming, to_path);
 
             m_renaming = "";
         }

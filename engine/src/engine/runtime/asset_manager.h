@@ -22,6 +22,8 @@ public:
 
     void CreateAsset(const AssetType& p_type, const std::filesystem::path& p_folder, const char* p_name = nullptr);
 
+    auto MoveAsset(const std::filesystem::path& p_old, const std::filesystem::path& p_new) -> Result<void>;
+
     std::string ResolvePath(const std::filesystem::path& p_path);
 
     static void WorkerMain();
