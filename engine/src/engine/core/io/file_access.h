@@ -82,12 +82,13 @@ public:
         s_createFuncs[p_access_type] = CreateBuiltin<T>;
     }
 
+    static std::string FixPath(AccessType, std::string_view p_path);
+
 protected:
     FileAccess() = default;
 
     virtual auto OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) -> Result<void> = 0;
     virtual void SetAccessType(AccessType p_access_type) { m_accessType = p_access_type; }
-    virtual std::string FixPath(std::string_view p_path);
 
     AccessType m_accessType = ACCESS_MAX;
     ModeFlags m_openMode = NONE;

@@ -29,7 +29,7 @@ Guid Guid::Create() {
     return result;
 }
 
-Result<Guid> Guid::Parse(const char* p_start, int p_length) {
+Result<Guid> Guid::Parse(const char* p_start, size_t p_length) {
     if (p_length != 35 /* 16 x 2 + 3 */) {
         return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "invalid GUID {}", std::string(p_start, p_length));
     }

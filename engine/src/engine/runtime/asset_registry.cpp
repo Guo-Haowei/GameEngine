@@ -4,6 +4,7 @@
 #include <latch>
 #include <yaml-cpp/yaml.h>
 
+#include "engine/core/string/string_utils.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_manager.h"
 
@@ -12,9 +13,58 @@ namespace my {
 namespace fs = std::filesystem;
 
 auto AssetRegistry::InitializeImpl() -> Result<void> {
+    fs::path assets_root = fs::path{ m_app->GetResourceFolder() };
+
+    struct Pair {
+        bool has_meta;
+        bool has_source;
+    };
+
+    std::unordered_map<std::string, Pair> resources;
+
+    // go through all files, create meta if not exists
+    for (const auto& entry : fs::recursive_directory_iterator(assets_root)) {
+        if (entry.is_regular_file()) {
+            fs::path relative = fs::relative(entry.path(), assets_root);
+            std::string short_path = std::format("@res://{}", relative.generic_string());
+
+            auto ext = StringUtils::Extension(short_path);
+            if (ext == ".meta") {
+                short_path.resize(short_path.size() - 5);  // remove '.meta'
+                resources[short_path].has_meta = true;
+            } else {
+                resources[short_path].has_source = true;
+            }
+        }
+    }
+
+    for (const auto& [key, value] : resources) {
+        if (value.has_meta) {
+            auto meta_path = std::format("{}.meta", key);
+            auto res = AssetMetaData::LoadMeta(meta_path);
+            if (!res) {
+                return HBN_ERROR(res.error());
+            }
+
+            // @TODO: request download
+            LOG_VERBOSE("{} detected, loading", meta_path);
+            continue;
+        }
+
+        DEV_ASSERT(value.has_source);
+        auto meta = AssetMetaData::CreateMeta(key);
+
+        // create meta from
+        auto res = meta.SaveMeta(key);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        LOG_VERBOSE("meta not detected for asset '{}', creating...", key);
+    }
+
+#if 0
     // @TODO: refactor
     // Always load assets
-    fs::path assets_root = fs::path{ m_app->GetResourceFolder() };
     fs::path always_load_path = assets_root / "alwaysload.yaml";
     std::ifstream file(always_load_path);
     if (file) {
@@ -54,6 +104,7 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
     }
 
     latch.wait();
+#endif
     return Result<void>();
 }
 
@@ -65,18 +116,18 @@ AssetHandle AssetRegistry::Request(const std::string& p_path,
                                    OnAssetLoadSuccessFunc p_on_success,
                                    void* p_userdata) {
     // @TODO: normalize path
-
-    AssetMetaData meta;
-    meta.path = p_path;
-    meta.guid = Guid::Create();
-
     {
         std::lock_guard lock(registry_mutex);
         auto it = path_map.find(p_path);
         if (it != path_map.end()) {
+            // @TODO: search for meta?
             return AssetHandle{ it->second->metadata.guid, it->second };
         }
     }
+
+    AssetMetaData meta;
+    meta.path = p_path;
+    meta.guid = Guid::Create();
 
     auto entry = std::make_shared<AssetEntry>(meta);
     {

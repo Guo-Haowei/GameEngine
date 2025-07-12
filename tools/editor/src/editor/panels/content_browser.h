@@ -29,7 +29,7 @@ protected:
     };
 
     std::map<std::string, ExtensionAction> m_iconMap;
-    AssetType m_assetType{ AssetType::NONE };
+    AssetType m_assetType{ AssetType::Count };
 };
 
 }  // namespace my

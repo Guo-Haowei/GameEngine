@@ -80,14 +80,14 @@ void ContentBrowser::DrawSideBar() {
         fs::path full_path = entry.path();
         auto stem = full_path.stem().string();
         bool should_skip = true;
-        AssetType type = AssetType::NONE;
+        AssetType type = AssetType::Count;
         if (stem == "images") {
             should_skip = false;
-            type = AssetType::IMAGE;
+            type = AssetType::Image;
         }
         if (stem == "scripts") {
             should_skip = false;
-            type = AssetType::TEXT;
+            type = AssetType::Text;
         }
         if (should_skip) {
             continue;

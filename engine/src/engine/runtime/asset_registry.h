@@ -26,6 +26,10 @@ protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
+    AssetHandle Request(AssetMetaData&& p_meta,
+                        OnAssetLoadSuccessFunc p_on_success,
+                        void* p_userdata);
+
     mutable std::mutex registry_mutex;
     std::unordered_map<std::string, std::shared_ptr<AssetEntry>> path_map;
     std::unordered_map<Guid, std::shared_ptr<AssetEntry>> uuid_map;

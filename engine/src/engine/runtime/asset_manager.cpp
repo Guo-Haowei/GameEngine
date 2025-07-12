@@ -95,7 +95,7 @@ auto AssetManager::LoadAssetSync(const AssetEntry* p_entry) -> Result<AssetRef> 
 
     AssetRef asset = *res;
 
-    if (asset->type == AssetType::IMAGE) {
+    if (asset->type == AssetType::Image) {
         auto image = std::dynamic_pointer_cast<ImageAsset>(asset);
 
         // @TODO: based on render, create asset on work threads

@@ -10,8 +10,14 @@ struct AssetMetaData {
     Guid guid;
     std::string path;
 
-    static AssetMetaData LoadMeta(const std::filesystem::path& p_path);
-    void SaveMeta(const std::filesystem::path& p_path) const;
+    /// Load meta from a .meta file
+    [[nodiscard]] static auto LoadMeta(std::string_view p_path) -> Result<AssetMetaData>;
+
+    /// Create meta based on asset file
+    [[nodiscard]] static auto CreateMeta(std::string_view p_path) -> AssetMetaData;
+
+    /// Save .meta to disk
+    [[nodiscard]] auto SaveMeta(std::string_view p_path) const -> Result<void>;
 };
 
 }  // namespace my

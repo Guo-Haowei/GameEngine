@@ -62,7 +62,7 @@ public:
     static constexpr const char* EXTENSION = ".scene";
 
     Scene()
-        : IAsset(AssetType::SCENE) {}
+        : IAsset(AssetType::Scene) {}
 
 public:
     template<Serializable T>

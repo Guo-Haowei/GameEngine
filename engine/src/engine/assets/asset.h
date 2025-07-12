@@ -7,14 +7,17 @@
 
 namespace my {
 
-enum class AssetType : uint8_t {
-    NONE,
-    IMAGE,
-    BUFFER,
-    TEXT,
-    SCENE,
+#define ASSET_TYPE_LIST          \
+    ASSET_TYPE(Image, "image")   \
+    ASSET_TYPE(Binary, "binary") \
+    ASSET_TYPE(Text, "binary")   \
+    ASSET_TYPE(Scene, "scene")
 
-    COUNT,
+enum class AssetType : uint8_t {
+#define ASSET_TYPE(ENUM, ...) ENUM,
+    ASSET_TYPE_LIST
+#undef ASSET_TYPE
+        Count,
 };
 
 struct IAsset {
@@ -27,21 +30,21 @@ struct IAsset {
 
 struct BufferAsset : IAsset {
     BufferAsset()
-        : IAsset(AssetType::BUFFER) {}
+        : IAsset(AssetType::Binary) {}
 
     std::vector<char> buffer;
 };
 
 struct TextAsset : IAsset {
     TextAsset()
-        : IAsset(AssetType::TEXT) {}
+        : IAsset(AssetType::Text) {}
 
     std::string source;
 };
 
 struct ImageAsset : IAsset {
     ImageAsset()
-        : IAsset(AssetType::IMAGE) {}
+        : IAsset(AssetType::Image) {}
 
     PixelFormat format = PixelFormat::UNKNOWN;
     int width = 0;
