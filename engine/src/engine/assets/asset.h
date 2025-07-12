@@ -1,5 +1,6 @@
 #pragma once
-#include "engine/assets/asset_handle.h"
+#include "asset_meta_data.h"
+
 #include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
 
@@ -12,19 +13,10 @@ enum class AssetType : uint8_t {
     TEXT,
     SCENE,
 
-    // MESH,
-    // ANIMATION,
-    // ARMATURE,
     COUNT,
 };
 
 struct IAsset {
-    struct Meta {
-        AssetType type;
-        AssetHandle handle;
-        std::string path;
-        // @TODO: name
-    };
 
     IAsset(AssetType p_type) : type(p_type) {}
     virtual ~IAsset() = default;
@@ -32,7 +24,7 @@ struct IAsset {
     const AssetType type;
 
     // @TODO: find a more efficient way
-    Meta meta;
+    AssetMetaData meta;
 };
 
 using OnAssetLoadSuccessFunc = void (*)(IAsset* p_asset, void* p_userdata);

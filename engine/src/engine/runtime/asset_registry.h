@@ -12,11 +12,11 @@ struct AssetRegistryHandle {
         ASSET_STATE_READY,
     };
 
-    AssetRegistryHandle(const IAsset::Meta& p_meta) : meta(p_meta),
+    AssetRegistryHandle(const AssetMetaData& p_meta) : meta(p_meta),
                                                       asset(nullptr),
                                                       state(ASSET_STATE_LOADING) {}
 
-    IAsset::Meta meta;
+    AssetMetaData meta;
     IAsset* asset;
     std::atomic<State> state;
 };
@@ -46,7 +46,7 @@ public:
         return nullptr;
     }
 
-    void RegisterAssets(int p_count, IAsset::Meta* p_metas);
+    void RegisterAssets(int p_count, AssetMetaData* p_metas);
 
     // @TODO: request certain type, if no such type, use default loader
     auto RequestAssetSync(const std::string& p_path) {

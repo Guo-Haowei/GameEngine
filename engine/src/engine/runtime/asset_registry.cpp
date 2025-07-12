@@ -25,7 +25,7 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
             return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "failed to parse {}, error: 'files' not found", always_load_path.string());
         }
 
-        std::vector<IAsset::Meta> asset_bundle;
+        std::vector<AssetMetaData> asset_bundle;
 
         for (const auto& item : files) {
             const auto& path = item["path"];
@@ -33,7 +33,7 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
                 CRASH_NOW();
             }
 
-            IAsset::Meta meta_data;
+            AssetMetaData meta_data;
             meta_data.path = path.as<std::string>();
             if (!meta_data.path.empty()) {
                 meta_data.handle = meta_data.path;
@@ -96,7 +96,7 @@ auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
                                      RequestMode p_mode,
                                      OnAssetLoadSuccessFunc p_on_success,
                                      void* p_user_data) -> Result<const IAsset*> {
-    IAsset::Meta meta;
+    AssetMetaData meta;
     meta.handle = p_path;
     meta.path = p_path;
 
@@ -135,7 +135,7 @@ auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
     return stub->asset;
 }
 
-void AssetRegistry::RegisterAssets(int p_count, IAsset::Meta* p_metas) {
+void AssetRegistry::RegisterAssets(int p_count, AssetMetaData* p_metas) {
     DEV_ASSERT(p_count);
 
     std::lock_guard gurad(m_lock);

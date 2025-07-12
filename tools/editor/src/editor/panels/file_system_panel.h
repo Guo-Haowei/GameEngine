@@ -14,9 +14,7 @@ public:
 protected:
     void UpdateInternal(Scene&) override;
 
-    void DrawSideBarHelper(const std::filesystem::path& p_path);
-    void DrawSideBar();
-    void DrawAssets();
+    void ListFile(const std::filesystem::path& p_path, const char* p_name_override = nullptr);
 
     // @TODO: use FilePath
     std::filesystem::path m_rootPath;
