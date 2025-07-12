@@ -31,6 +31,7 @@ public:
 
 private:
     [[nodiscard]] auto LoadAssetSync(const AssetEntry* p_entry) -> Result<AssetRef>;
+
     void LoadAssetAsync(AssetEntry* p_entry,
                         OnAssetLoadSuccessFunc p_on_success,
                         void* p_userdata);

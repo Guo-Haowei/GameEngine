@@ -3,6 +3,7 @@
 #include <imgui/imgui_internal.h>
 #include <imnodes/imnodes.h>
 
+#include "editor/panels/asset_inspector.h"
 #include "editor/panels/content_browser.h"
 #include "editor/panels/file_system_panel.h"
 #include "editor/panels/hierarchy_panel.h"
@@ -11,7 +12,6 @@
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_viewer.h"
 #include "editor/panels/renderer_panel.h"
-#include "editor/panels/tilemap_panel.h"
 #include "editor/panels/viewer.h"
 #include "editor/widget.h"
 #include "engine/input/input_event.h"
@@ -58,7 +58,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<HierarchyPanel>(*this));
     AddPanel(std::make_shared<PropertyPanel>(*this));
     AddPanel(m_viewer);
-    AddPanel(std::make_shared<TileMapPanel>(*this));
+    AddPanel(std::make_shared<AssetInspector>(*this));
     AddPanel(std::make_shared<RenderGraphViewer>(*this));
     AddPanel(std::make_shared<FileSystemPanel>(*this));
 #if !USING(PLATFORM_WASM)

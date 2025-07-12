@@ -41,10 +41,8 @@ struct ImageAsset : IAsset {
 struct SpriteSheetAsset : IAsset {
     Guid image_id;
 
-    int columns = 1;
-    int rows = 1;
-    Vector2i separation = Vector2i::Zero;
-    Vector2i offset = Vector2i::Zero;
+    Vector2i separation{ 16, 16 };
+    Vector2i offset{ Vector2i::Zero };
 
     std::vector<Rect> frames;
 

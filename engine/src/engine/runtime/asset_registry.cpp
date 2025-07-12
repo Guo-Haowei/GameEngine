@@ -125,6 +125,19 @@ AssetHandle AssetRegistry::Request(const std::string& p_path) {
     return AssetHandle{ .guid = Guid(), .entry = nullptr };
 }
 
+void AssetRegistry::MoveAsset(std::string&& p_old, std::string&& p_new) {
+    std::lock_guard lock(registry_mutex);
+    auto it = m_path_map.find(p_old);
+    DEV_ASSERT(it != m_path_map.end());
+    const Guid& guid = it->second;
+
+    auto it2 = m_guid_map.find(guid);
+    DEV_ASSERT(it2 != m_guid_map.end());
+
+    m_path_map[p_new] = guid;
+    it2->second->metadata.path = std::move(p_new);
+}
+
 #if 0
 void AssetRegistry::GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out) {
     std::lock_guard gurad(m_lock);

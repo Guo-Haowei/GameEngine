@@ -36,6 +36,9 @@ struct EditorContext {
     EditorCameraType cameraType{ CAMERA_3D };
     CameraComponent cameras[CAMERA_MAX];
 
+    AssetRef selected_asset;
+    std::string drag_payload;
+
     // for tile map editor
     // need to refactor
     int selected_tile = -1;

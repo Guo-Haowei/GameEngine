@@ -22,32 +22,25 @@ void FileSystemPanel::OnAttach() {
     m_root = fs::path{ path };
 }
 
-void FileSystemPanel::ShowResourceToolTip(const std::string& p_path) {
-    auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
-    auto handle = asset_registry->Request(p_path);
+void FileSystemPanel::ShowResourceToolTip(const AssetMetaData& p_meta, const IAsset& p_asset) {
+    if (ImGui::BeginTooltip()) {
+        ImGui::Text("%s", p_meta.path.c_str());
+        ImGui::Text("type: %s", p_meta.type.ToString());
 
-    if (handle.IsReady()) {
-        const auto& meta = handle.entry->metadata;
-        if (ImGui::BeginTooltip()) {
-            ImGui::Text("%s", meta.path.c_str());
-            ImGui::Text("type: %s", meta.type.ToString());
+        if (p_asset.type == AssetType::Image) {
+            auto texture = reinterpret_cast<const ImageAsset&>(p_asset);
+            const int w = texture.width;
+            const int h = texture.height;
+            ImGui::Text("Dimension: %d x %d", w, h);
 
-            if (meta.type == AssetType::Image) {
-                auto texture = static_cast<ImageAsset*>(handle.entry->asset.get());
-                DEV_ASSERT(texture);
-                const int w = texture->width;
-                const int h = texture->height;
-                ImGui::Text("Dimension: %d x %d", w, h);
-
-                if (texture->gpu_texture) {
-                    float adjusted_w = glm::min(256.f, static_cast<float>(w));
-                    float adjusted_h = adjusted_w / w * h;
-                    ImGui::Image(texture->gpu_texture->GetHandle(), ImVec2(adjusted_w, adjusted_h));
-                }
+            if (texture.gpu_texture) {
+                float adjusted_w = glm::min(256.f, static_cast<float>(w));
+                float adjusted_h = adjusted_w / w * h;
+                ImGui::Image(texture.gpu_texture->GetHandle(), ImVec2(adjusted_w, adjusted_h));
             }
-
-            ImGui::EndTooltip();
         }
+
+        ImGui::EndTooltip();
     }
 }
 
@@ -126,14 +119,28 @@ void FileSystemPanel::ListFile(const std::filesystem::path& p_path, const char* 
         } else {
             ImGui::Text(filename.c_str());
         }
+        if (is_file) {
+            // @TODO: refactor
+            if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+                m_editor.context.drag_payload = short_path;
+                ImGui::SetDragDropPayload("MY_PAYLOAD_TYPE",
+                                          &m_editor.context.drag_payload, sizeof(std::string));
+                ImGui::Text("Dragging sprite...");
+                ImGui::EndDragDropSource();
+            }
+        }
+
         const bool hovered = ImGui::IsItemHovered();
         if (hovered) {
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-                LOG_OK("clicked");
-                // handle click
-            } else if (is_file) {
-                ShowResourceToolTip(short_path);
-                // handle hover
+            auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
+            auto handle = asset_registry->Request(short_path);
+
+            if (handle.IsReady()) {
+                if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+                    m_editor.context.selected_asset = handle.entry->asset;
+                } else if (is_file) {
+                    ShowResourceToolTip(handle.entry->metadata, *handle.entry->asset.get());
+                }
             }
         }
     }

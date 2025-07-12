@@ -73,7 +73,7 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".obj", AssimpAssetLoader::CreateLoader);
 #endif
 
-    IAssetLoader::RegisterLoader(".sprite", TextAssetLoader::CreateLoader);
+    IAssetLoader::RegisterLoader(".sprite", YamlAssetLoader<SpriteSheetAsset>::CreateLoader);
     IAssetLoader::RegisterLoader(".lua", TextAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".ttf", BufferAssetLoader::CreateLoader);
 
@@ -143,12 +143,18 @@ void AssetManager::CreateAsset(const AssetType& p_type,
 }
 
 auto AssetManager::MoveAsset(const std::filesystem::path& p_old, const std::filesystem::path& p_new) -> Result<void> {
+    if (fs::is_directory(p_old)) {
+        LOG_WARN("don't support moving folder yet");
+        return Result<void>();
+    }
+
     auto meta_path_str = std::format("{}.meta", p_old.string());
     fs::path old_meta{ meta_path_str };
 
     meta_path_str = std::format("{}.meta", p_new.string());
     fs::path new_meta{ meta_path_str };
 
+    auto old_path = ResolvePath(p_old);
     auto new_path = ResolvePath(p_new);
     try {
         fs::rename(old_meta, new_meta);
@@ -157,6 +163,7 @@ auto AssetManager::MoveAsset(const std::filesystem::path& p_old, const std::file
         return HBN_ERROR(ErrorCode::ERR_FILE_NO_PERMISSION, "{}", e.what());
     }
 
+    m_app->GetAssetRegistry()->MoveAsset(std::move(old_path), std::move(new_path));
     return Result<void>();
 }
 
