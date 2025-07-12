@@ -1,59 +1,18 @@
 #pragma once
+#include "guid.h"
 
-#if 0
 namespace my {
 
-// @TODO: generate a hash at compile time?
+struct AssetEntry;
+struct IAsset;
+
 struct AssetHandle {
-    constexpr AssetHandle() : hash(0) {}
+    Guid guid;
+    std::shared_ptr<AssetEntry> entry;
 
-    AssetHandle(const std::string& p_path) {
-#if USING(DEBUG_BUILD)
-        path = p_path;
-#endif
-        hash = std::hash<std::string>()(p_path);
-    }
-
-    bool operator==(const AssetHandle& p_rhs) const {
-        return hash == p_rhs.hash;
-    }
-
-    bool operator!=(const AssetHandle& p_rhs) const {
-        return hash == p_rhs.hash;
-    }
-
-    bool operator<(const AssetHandle& p_rhs) const {
-        return hash < p_rhs.hash;
-    }
-
-    bool operator<=(const AssetHandle& p_rhs) const {
-        return hash <= p_rhs.hash;
-    }
-
-    bool operator>(const AssetHandle& p_rhs) const {
-        return hash > p_rhs.hash;
-    }
-
-    bool operator>=(const AssetHandle& p_rhs) const {
-        return hash >= p_rhs.hash;
-    }
-
-    size_t hash;
-#if USING(DEBUG_BUILD)
-    std::string path;
-#endif
+    bool IsReady() const;
+    std::shared_ptr<IAsset> Wait() const;
 };
 
 }  // namespace my
 
-namespace std {
-
-template<>
-struct hash<my::AssetHandle> {
-    std::size_t operator()(const my::AssetHandle& p_handle) const {
-        return p_handle.hash;
-    }
-};
-
-}  // namespace std
-#endif
