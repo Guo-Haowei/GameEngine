@@ -8,7 +8,7 @@ bool AssetHandle::IsReady() const {
     return entry && entry->status == AssetStatus::Loaded;
 }
 
-std::shared_ptr<IAsset> AssetHandle::Wait() const {
+[[nodiscard]] auto AssetHandle::Wait() const -> Result<AssetRef> {
     DEV_ASSERT(entry);
     return entry->Wait();
 }

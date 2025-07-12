@@ -184,9 +184,11 @@ void LuaScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::
 
 Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, ObjectFunctions& p_meta) {
     auto asset_registry = m_app->GetAssetRegistry();
+    [[maybe_unused]]
     auto handle = asset_registry->Request(p_path);
     DEV_ASSERT(0);
 
+#if 0
     auto source = dynamic_cast<const TextAsset*>(handle.Wait().get());
     if (!source) {
         return HBN_ERROR(ErrorCode::ERR_FILE_NOT_FOUND, "file {} not found", p_path);
@@ -196,6 +198,7 @@ Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_
         LOG_ERROR("failed to execute script '{}', error: '{}'", source->source, lua_tostring(L, -1));
         return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED);
     }
+#endif
 
     // check if function exists
     lua_getglobal(L, p_class_name);

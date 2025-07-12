@@ -2,17 +2,21 @@
 
 namespace my {
 
-std::shared_ptr<IAsset> AssetEntry::Wait() {
+auto AssetEntry::Wait() -> Result<AssetRef> {
     std::unique_lock lock(m_mutex);
 
     m_cv.wait(lock, [this]() {
         return status == AssetStatus::Loaded || status == AssetStatus::Failed;
     });
 
+    if (status == AssetStatus::Failed) {
+        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "failed to load {}", metadata.path);
+    }
+
     return asset;
 }
 
-void AssetEntry::MarkLoaded(std::shared_ptr<IAsset> p_asset) {
+void AssetEntry::MarkLoaded(AssetRef p_asset) {
     {
         std::lock_guard lock(m_mutex);
         asset = std::move(p_asset);

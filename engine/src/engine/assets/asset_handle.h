@@ -1,4 +1,5 @@
 #pragma once
+#include "asset_forward.h"
 #include "guid.h"
 
 namespace my {
@@ -11,11 +12,16 @@ struct AssetHandle {
     std::shared_ptr<AssetEntry> entry;
 
     bool IsReady() const;
-    std::shared_ptr<IAsset> Wait() const;
+    [[nodiscard]] auto Wait() const -> Result<AssetRef>;
 
     template<typename T>
-    std::shared_ptr<T> Wait() {
-        std::shared_ptr<IAsset> ptr = Wait();
+    [[nodiscard]] auto Wait() -> Result<std::shared_ptr<T>> {
+        auto res = Wait();
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+
+        AssetRef ptr = *res;
         return std::dynamic_pointer_cast<T>(ptr);
     }
 };

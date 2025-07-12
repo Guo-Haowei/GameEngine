@@ -1,4 +1,5 @@
 #pragma once
+#include "asset_forward.h"
 #include "asset_meta_data.h"
 
 namespace my {
@@ -15,7 +16,7 @@ enum class AssetStatus : uint8_t {
 class AssetEntry {
 public:
     AssetMetaData metadata;
-    std::shared_ptr<IAsset> asset;
+    AssetRef asset;
     std::atomic<AssetStatus> status;
 
     AssetEntry(const AssetMetaData& p_metadata)
@@ -28,9 +29,9 @@ public:
         , asset(nullptr)
         , status{ AssetStatus::Unloaded } {}
 
-    std::shared_ptr<IAsset> Wait();
+    [[nodiscard]] auto Wait() -> Result<AssetRef>;
 
-    void MarkLoaded(std::shared_ptr<IAsset> p_asset);
+    void MarkLoaded(AssetRef p_asset);
 
     void MarkFailed();
 

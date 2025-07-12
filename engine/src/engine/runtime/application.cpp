@@ -439,9 +439,9 @@ Scene* Application::CreateInitialScene() {
 
         auto& sprite = tileMap->m_sprite;
 
-        auto image = m_assetRegistry->Request("@res://images/tiles.png");
+        auto res = m_assetRegistry->Request("@res://images/tiles.png").Wait<ImageAsset>();
 
-        sprite.texture = image.Wait<ImageAsset>().get();
+        sprite.texture = (*res).get();
 
         const int grid_x = 3;
         const int grid_y = 2;

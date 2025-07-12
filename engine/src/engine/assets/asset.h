@@ -1,4 +1,5 @@
 #pragma once
+#include "asset_forward.h"
 #include "asset_meta_data.h"
 
 #include "engine/math/geomath.h"
