@@ -18,7 +18,7 @@ protected:
 
     void ShowResourceToolTip(const std::string& p_path);
 
-    void FolderPopup(const std::filesystem::path& p_path);
+    void FolderPopup(const std::filesystem::path& p_path, bool p_is_dir);
 
     std::filesystem::path m_root;
     std::filesystem::path m_renaming;

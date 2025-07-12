@@ -42,7 +42,7 @@ struct AssetMetaData {
     [[nodiscard]] static auto LoadMeta(std::string_view p_path) -> Result<AssetMetaData>;
 
     /// Create meta based on asset file
-    [[nodiscard]] static auto CreateMeta(std::string_view p_path) -> AssetMetaData;
+    [[nodiscard]] static auto CreateMeta(std::string_view p_path) -> std::optional<AssetMetaData>;
 
     /// Save .meta to disk
     [[nodiscard]] auto SaveMeta(std::string_view p_path) const -> Result<void>;

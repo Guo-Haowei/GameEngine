@@ -49,21 +49,33 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
                 return HBN_ERROR(res.error());
             }
 
+            auto meta = std::move(*res);
+
+            if (meta.path != key) {
+                meta.path = key;
+                LOG_WARN("asset '{}'({}) has been moved", meta.path, meta.guid.ToString());
+            }
+
             LOG_VERBOSE("'{}' detected, loading...", meta_path);
-            assets.emplace_back(std::move(*res));
+            assets.emplace_back(std::move(meta));
             continue;
         }
 
         DEV_ASSERT(value.has_source);
         auto meta = AssetMetaData::CreateMeta(key);
+        if (!meta) {
+            LOG_WARN("file '{}' not supported", key);
+            continue;
+        }
 
-        auto res = meta.SaveMeta(meta_path);
+        auto meta2 = std::move(meta.value());
+        auto res = meta2.SaveMeta(meta_path);
         if (!res) {
             return HBN_ERROR(res.error());
         }
 
         LOG_VERBOSE("'{}' not detected, creating", meta_path);
-        assets.emplace_back(std::move(meta));
+        assets.emplace_back(std::move(meta2));
     }
 
     std::latch latch(assets.size());

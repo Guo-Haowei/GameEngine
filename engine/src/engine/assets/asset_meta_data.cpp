@@ -68,14 +68,10 @@ auto AssetMetaData::LoadMeta(std::string_view p_path) -> Result<AssetMetaData> {
         meta.type = *res;
     }
     meta.path = node["path"].as<std::string>();
-    if (meta.path != p_path) {
-        __debugbreak();
-    }
-
     return meta;
 }
 
-auto AssetMetaData::CreateMeta(std::string_view p_path) -> AssetMetaData {
+auto AssetMetaData::CreateMeta(std::string_view p_path) -> std::optional<AssetMetaData> {
     auto extension = StringUtils::Extension(p_path);
 
     AssetType type = AssetType::Binary;
@@ -84,7 +80,7 @@ auto AssetMetaData::CreateMeta(std::string_view p_path) -> AssetMetaData {
     } else if (extension == ".ttf") {
         type = AssetType::Binary;
     } else {
-        CRASH_NOW_MSG("TODO: handle unsupported");
+        return std::nullopt;
     }
 
     AssetMetaData meta;

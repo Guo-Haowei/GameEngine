@@ -67,6 +67,7 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".obj", AssimpAssetLoader::CreateLoader);
 #endif
 
+    IAssetLoader::RegisterLoader(".sprite", TextAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".lua", TextAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".ttf", BufferAssetLoader::CreateLoader);
 

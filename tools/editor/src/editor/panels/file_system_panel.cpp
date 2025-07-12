@@ -1,6 +1,7 @@
 #include "file_system_panel.h"
 
 #include <IconsFontAwesome/IconsFontAwesome6.h>
+#include <fstream>
 
 #include "engine/assets/asset.h"
 #include "editor/editor_layer.h"
@@ -11,24 +12,6 @@
 namespace my {
 
 namespace fs = std::filesystem;
-//
-//class AssetHandler {
-//public:
-//    virtual ~AssetHandler() = default;
-//
-//    virtual void DrawTooltip(const fs::path& p_path) {
-//
-//    }
-//
-//    virtual void DrawContextMenu(const fs::path& p_path) = 0;
-//};
-//
-//class ImageHandler : AssetHandler {
-//public:
-//    void DrawTooltip(const fs::path& p_path) override {
-//
-//    }
-//};
 
 FileSystemPanel::FileSystemPanel(EditorLayer& p_editor)
     : EditorWindow("FileSystem", p_editor) {
@@ -68,12 +51,30 @@ void FileSystemPanel::ShowResourceToolTip(const std::string& p_path) {
     }
 }
 
-void FileSystemPanel::FolderPopup(const std::filesystem::path& p_path) {
+void FileSystemPanel::FolderPopup(const std::filesystem::path& p_path, bool p_is_dir) {
+    // @TODO: fix this
+    static int s_counter = 0;
+
     if (ImGui::MenuItem("Rename")) {
         m_renaming = p_path;
     }
-    if (ImGui::MenuItem("Delete")) {
-        LOG_ERROR("{}", p_path.string());
+    if (p_is_dir) {
+        if (ImGui::BeginMenu("Add")) {
+            if (ImGui::MenuItem("SpriteSheet")) {
+                // @TODO: let asset manager creates the asset + meta
+                // then notify asset registry to load
+                auto name = std::format("untitled{}.sprite", ++s_counter);
+                fs::path path = p_path / name;
+                LOG_OK("Create {}", path.string());
+                std::ofstream file(path);
+                if (file) {
+                }
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("Delete")) {
+            LOG_ERROR("{}", p_path.string());
+        }
     }
 }
 
@@ -105,9 +106,7 @@ void FileSystemPanel::ListFile(const std::filesystem::path& p_path, const char* 
     std::string short_path = std::format("@res://{}", relative.generic_string());
 
     if (ImGui::BeginPopupContextItem()) {
-        if (is_dir) {
-            FolderPopup(p_path);
-        }
+        FolderPopup(p_path, is_dir);
         ImGui::EndPopup();
     }
 
@@ -115,8 +114,16 @@ void FileSystemPanel::ListFile(const std::filesystem::path& p_path, const char* 
 
     if (m_renaming == p_path) {
         std::string buffer;
-        buffer.resize(128);
+        buffer.resize(256);
         if (ImGui::InputText("###rename", buffer.data(), buffer.size(), ImGuiInputTextFlags_EnterReturnsTrue)) {
+            fs::path to_path = m_renaming.parent_path();
+            to_path = to_path / buffer.c_str();
+            try {
+                fs::rename(m_renaming, to_path);
+            } catch (const fs::filesystem_error& ) {
+                LOG_ERROR("failed to rename from '{}' to '{}'", m_renaming.string(), to_path.string());
+            }
+
             m_renaming = "";
         }
         if (!ImGui::IsItemActive() && ImGui::IsMouseClicked(0)) {
