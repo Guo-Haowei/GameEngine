@@ -21,6 +21,7 @@ protected:
     void FolderPopup(const std::filesystem::path& p_path);
 
     std::filesystem::path m_root;
+    std::filesystem::path m_renaming;
 };
 
 }  // namespace my
