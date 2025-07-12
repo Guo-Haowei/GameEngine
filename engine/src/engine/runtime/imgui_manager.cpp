@@ -5,6 +5,7 @@
 
 #include <filesystem>
 
+#include "engine/assets/assets.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_manager.h"
@@ -30,17 +31,16 @@ auto ImguiManager::InitializeImpl() -> Result<void> {
     const float base_font_size = 16.0f * scale;
     const float icon_font_size = base_font_size * 2.0f / 3.0f;
 
-    // dummy wait here
-    AssetManager::Wait();
     {
         const std::string path = "@res://fonts/DroidSans.ttf";
-        auto font = m_app->GetAssetRegistry()->GetAssetByHandle<BufferAsset>(path);
+        auto res = m_app->GetAssetRegistry()->Request(path).Wait<BufferAsset>();
+        auto font = *res;
 
         if (DEV_VERIFY(font)) {
             ImFontConfig font_cfg;
             font_cfg.FontDataOwnedByAtlas = false;
 
-            void* data = (void*)font->buffer.data();
+            void* data = font->buffer.data();
             if (!io.Fonts->AddFontFromMemoryTTF(data, (int)font->buffer.size(), base_font_size, &font_cfg)) {
                 return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create font '{}'", path);
             }
@@ -49,7 +49,8 @@ auto ImguiManager::InitializeImpl() -> Result<void> {
 
     {
         const std::string path = "@res://fonts/" FONT_ICON_FILE_NAME_FAS;
-        auto font = m_app->GetAssetRegistry()->GetAssetByHandle<BufferAsset>(path);
+        auto handle = m_app->GetAssetRegistry()->Request(path).Wait<BufferAsset>();
+        auto font = *handle;
 
         if (DEV_VERIFY(font)) {
             // merge in icons from Font Awesome

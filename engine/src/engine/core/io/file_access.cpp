@@ -31,16 +31,16 @@ auto FileAccess::CreateForPath(std::string_view p_path) -> std::shared_ptr<FileA
 auto FileAccess::Open(std::string_view p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>> {
     auto file_access = CreateForPath(p_path);
 
-    if (auto res = file_access->OpenInternal(file_access->FixPath(p_path), p_mode_flags); !res) {
+    if (auto res = file_access->OpenInternal(FileAccess::FixPath(file_access->m_accessType, p_path), p_mode_flags); !res) {
         return HBN_ERROR(res.error());
     }
 
     return file_access;
 }
 
-std::string FileAccess::FixPath(std::string_view p_path) {
+std::string FileAccess::FixPath(AccessType p_access_type, std::string_view p_path) {
     std::string fixed_path{ p_path };
-    switch (m_accessType) {
+    switch (p_access_type) {
         case ACCESS_RESOURCE: {
             if (p_path.starts_with("@res://")) {
                 // @TODO: configure it somewhere

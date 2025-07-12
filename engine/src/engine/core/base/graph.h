@@ -36,9 +36,8 @@ public:
     public:
         Iterator(const std::vector<T>& p_vertices,
                  const std::vector<int>& p_sorted,
-                 size_t p_index) : m_vertices(p_vertices),
-                                   m_sorted(p_sorted),
-                                   m_index(p_index) {}
+                 size_t p_index)
+            : m_vertices(p_vertices), m_sorted(p_sorted), m_index(p_index) {}
 
         Self operator++(int) {
             Self tmp = *this;

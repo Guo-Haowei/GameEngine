@@ -7,7 +7,8 @@ class Scene;
 
 class Bullet3PhysicsManager : public IPhysicsManager {
 public:
-    Bullet3PhysicsManager() : IPhysicsManager("Bullet3PhysicsManager") {}
+    Bullet3PhysicsManager()
+        : IPhysicsManager("Bullet3PhysicsManager") {}
 
     void Update(Scene& p_scene, float p_timestep) override;
 

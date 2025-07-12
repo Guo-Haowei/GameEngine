@@ -51,7 +51,8 @@ WARNING_DISABLE(4100, "-Wunused-parameter")
 
 class NullGraphicsManager : public IGraphicsManager {
 public:
-    NullGraphicsManager() : IGraphicsManager("NullGraphicsManager") {}
+    NullGraphicsManager()
+        : IGraphicsManager("NullGraphicsManager") {}
 
     auto InitializeImpl() -> Result<void> override { return Result<void>(); }
     void FinalizeImpl() override {}
@@ -167,7 +168,8 @@ WARNING_POP()
 
 class NullPhysicsManager : public IPhysicsManager {
 public:
-    NullPhysicsManager() : IPhysicsManager("NullPhysicsManager") {}
+    NullPhysicsManager()
+        : IPhysicsManager("NullPhysicsManager") {}
     virtual ~NullPhysicsManager() = default;
 
     virtual auto InitializeImpl() -> Result<void> { return Result<void>(); }

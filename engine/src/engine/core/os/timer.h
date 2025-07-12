@@ -6,7 +6,8 @@ constexpr inline uint64_t MILLISECOND = 1000000;
 constexpr inline uint64_t SECOND = MILLISECOND * 1000;
 
 struct NanoSecond {
-    NanoSecond(const uint64_t p_value) : m_value(p_value) {}
+    NanoSecond(const uint64_t p_value)
+        : m_value(p_value) {}
 
     double ToMillisecond() const {
         constexpr double factor = 1.0 / MILLISECOND;

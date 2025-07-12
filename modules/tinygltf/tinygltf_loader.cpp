@@ -142,7 +142,7 @@ void TinyGLTFLoader::ProcessNode(int p_node_index, ecs::Entity p_parent) {
     }
 }
 
-auto TinyGLTFLoader::Load() -> Result<IAsset*> {
+auto TinyGLTFLoader::Load() -> Result<AssetRef> {
     m_scene = new Scene;
 
     tinygltf::TinyGLTF loader;
@@ -208,7 +208,8 @@ auto TinyGLTFLoader::Load() -> Result<IAsset*> {
             auto& img = m_model->images[img_source];
             const std::string path = m_basePath + img.uri;
             material.textures[MaterialComponent::TEXTURE_BASE].path = path;
-            AssetRegistry::GetSingleton().RequestAssetAsync(path);
+            DEV_ASSERT(0);
+            // AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
         if (normalTexture != x.additionalValues.end()) {
             auto& tex = m_model->textures[normalTexture->second.TextureIndex()];
@@ -219,7 +220,8 @@ auto TinyGLTFLoader::Load() -> Result<IAsset*> {
             auto& img = m_model->images[img_source];
             const std::string path = m_basePath + img.uri;
             material.textures[MaterialComponent::TEXTURE_NORMAL].path = path;
-            AssetRegistry::GetSingleton().RequestAssetAsync(path);
+            DEV_ASSERT(0);
+            // AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
         if (metallicRoughnessTexture != x.values.end()) {
             auto& tex = m_model->textures[metallicRoughnessTexture->second.TextureIndex()];
@@ -230,7 +232,8 @@ auto TinyGLTFLoader::Load() -> Result<IAsset*> {
             auto& img = m_model->images[img_source];
             const std::string path = m_basePath + img.uri;
             material.textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].path = path;
-            AssetRegistry::GetSingleton().RequestAssetAsync(path);
+            DEV_ASSERT(0);
+            // AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
 #if 0
 		if (emissiveTexture != x.additionalValues.end())
@@ -318,7 +321,7 @@ auto TinyGLTFLoader::Load() -> Result<IAsset*> {
     // Create cameras:
 
     m_scene->m_root = root;
-    return m_scene;
+    return AssetRef(m_scene);
 }
 
 void TinyGLTFLoader::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {

@@ -18,7 +18,8 @@ Texture2D t_BrdfLut : register(t8);
 
 #include "hlsl/lighting.hlsl"
 
-float4 main(VS_OUTPUT_UV input) : SV_TARGET {
+float4 main(VS_OUTPUT_UV input)
+    : SV_TARGET {
     const float2 uv = input.uv;
     const float4 emissive_roughness_metallic = t_GbufferMaterialMap.Sample(s_linearMipWrapSampler, uv);
     clip(emissive_roughness_metallic.a - 0.01f);

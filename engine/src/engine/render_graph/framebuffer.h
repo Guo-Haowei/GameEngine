@@ -28,7 +28,8 @@ struct FramebufferDesc {
 };
 
 struct Framebuffer {
-    Framebuffer(const FramebufferDesc& p_desc) : desc(p_desc) {
+    Framebuffer(const FramebufferDesc& p_desc)
+        : desc(p_desc) {
         // @TODO: better way
         for (auto it : desc.colorAttachments) {
             outSrvs.emplace_back(it);

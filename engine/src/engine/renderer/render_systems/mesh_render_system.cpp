@@ -12,6 +12,8 @@ using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
 // @TODO: fix this function OMG
 static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent* p_material, MaterialConstantBuffer& cb) {
+    unused(p_is_opengl);
+
     cb.c_baseColor = p_material->baseColor;
     cb.c_metallic = p_material->metallic;
     cb.c_roughness = p_material->roughness;
@@ -27,8 +29,10 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
             return false;
         }
 
-        // @TODO: at least fix this
-        const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(p_material->textures[p_idx].path);
+        return false;
+// @TODO: at least fix this
+#if 0
+        const ImageAsset* image = AssetRegistry::GetSingleton().Request<ImageAsset>(p_material->textures[p_idx].path);
         if (!image) {
             return false;
         }
@@ -47,6 +51,7 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
             p_out_resident_handle.Set32(static_cast<uint32_t>(resident_handle));
         }
         return true;
+#endif
     };
 
     cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_BaseColorMapResidentHandle);

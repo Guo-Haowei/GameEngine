@@ -10,7 +10,8 @@ class IPhysicsManager : public Module,
 public:
     using CreateFunc = IPhysicsManager* (*)();
 
-    IPhysicsManager(std::string_view p_name) : Module(p_name) {}
+    IPhysicsManager(std::string_view p_name)
+        : Module(p_name) {}
 
     virtual void Update(Scene& p_scene, float p_timestep) = 0;
 

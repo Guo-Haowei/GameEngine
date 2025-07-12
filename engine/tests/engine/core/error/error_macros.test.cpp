@@ -6,7 +6,8 @@ namespace my {
 
 class TestOS : public OS {
 public:
-    TestOS(std::string* buffer = nullptr) : m_buffer(buffer) {}
+    TestOS(std::string* buffer = nullptr)
+        : m_buffer(buffer) {}
 
     void Print(LogLevel, std::string_view message) override {
         if (m_buffer) {

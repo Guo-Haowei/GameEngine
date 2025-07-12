@@ -10,7 +10,8 @@ class InputManager : public Singleton<InputManager>,
                      public Module,
                      public MouseButtonBase {
 public:
-    InputManager() : Module("InputManager") {}
+    InputManager()
+        : Module("InputManager") {}
 
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;

@@ -19,8 +19,8 @@ protected:
     void TilePaint();
 
     // @TODO: refactor
-    const ImageAsset* m_tileset{ nullptr };
-    const ImageAsset* m_checkerboard{ nullptr };
+    std::shared_ptr<ImageAsset> m_tileset{ nullptr };
+    std::shared_ptr<ImageAsset> m_checkerboard{ nullptr };
 
     Vector2i m_sep{ 64, 64 };
 

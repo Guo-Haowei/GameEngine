@@ -13,7 +13,8 @@ public:
 
     Box() { MakeInvalid(); }
 
-    Box(const vec_type& p_min, const vec_type& p_max) : m_min(p_min), m_max(p_max) {}
+    Box(const vec_type& p_min, const vec_type& p_max)
+        : m_min(p_min), m_max(p_max) {}
 
     void MakeInvalid() {
         m_min = vec_type(std::numeric_limits<float>::infinity());

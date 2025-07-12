@@ -1,5 +1,4 @@
 #pragma once
-#include "file_path.h"
 
 namespace my {
 
@@ -21,9 +20,14 @@ public:
     };
 
     enum ModeFlags : uint8_t {
-        NONE = 0,
-        READ = 1,
-        WRITE = 2,
+        NONE = BIT(0),
+        READ = BIT(1),
+        WRITE = BIT(2),
+        CREATE = BIT(3),
+        TRUNCATE = BIT(4),
+        EXCLUSIVE = BIT(5),
+
+        READ_WRITE = READ | WRITE,
     };
 
     virtual ~FileAccess() = default;
@@ -61,8 +65,11 @@ public:
     AccessType GetAccessType() const { return m_accessType; }
     ModeFlags GetOpenMode() const { return m_openMode; }
 
-    static void SetFolderCallback(GetUserFolderFunc p_user_func, GetResourceFolderFunc p_resource_func) {
+    static void SetUserFolderCallback(GetUserFolderFunc p_user_func) {
         s_getUserFolderFunc = p_user_func;
+    }
+
+    static void SetResFolderCallback(GetResourceFolderFunc p_resource_func) {
         s_getResourceFolderFunc = p_resource_func;
     }
 
@@ -70,21 +77,19 @@ public:
     static auto CreateForPath(std::string_view p_path) -> std::shared_ptr<FileAccess>;
 
     static auto Open(std::string_view p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>>;
-    static auto Open(const FilePath& p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>> {
-        return Open(p_path.StringView(), p_mode_flags);
-    }
 
     template<typename T>
     static void MakeDefault(AccessType p_access_type) {
         s_createFuncs[p_access_type] = CreateBuiltin<T>;
     }
 
+    static std::string FixPath(AccessType p_access_type, std::string_view p_path);
+
 protected:
     FileAccess() = default;
 
     virtual auto OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) -> Result<void> = 0;
     virtual void SetAccessType(AccessType p_access_type) { m_accessType = p_access_type; }
-    virtual std::string FixPath(std::string_view p_path);
 
     AccessType m_accessType = ACCESS_MAX;
     ModeFlags m_openMode = NONE;
@@ -100,5 +105,7 @@ private:
     static GetUserFolderFunc s_getUserFolderFunc;
     static GetResourceFolderFunc s_getResourceFolderFunc;
 };
+
+DEFINE_ENUM_BITWISE_OPERATIONS(FileAccess::ModeFlags);
 
 }  // namespace my

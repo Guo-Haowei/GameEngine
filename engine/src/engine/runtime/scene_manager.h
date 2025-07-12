@@ -10,7 +10,8 @@ class Application;
 
 class SceneManager : public Singleton<SceneManager>, public Module {
 public:
-    SceneManager() : Module("SceneManager") {}
+    SceneManager()
+        : Module("SceneManager") {}
 
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;

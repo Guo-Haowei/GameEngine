@@ -5,7 +5,8 @@ namespace my {
 struct Object {
     Object() {
     }
-    Object(int value) : value(value) {
+    Object(int value)
+        : value(value) {
     }
     ~Object() {
     }

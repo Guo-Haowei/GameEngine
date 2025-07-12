@@ -16,9 +16,12 @@ class Color : public Vector<float, 4> {
     using Base = Vector<float, 4>;
 
 public:
-    constexpr Color() : Base(0, 0, 0, 1) {}
-    constexpr Color(float p_r, float p_g, float p_b, float p_a) : Base(p_r, p_g, p_b, p_a) {}
-    constexpr Color(float p_r, float p_g, float p_b) : Base(p_r, p_g, p_b, 1.0f) {}
+    constexpr Color()
+        : Base(0, 0, 0, 1) {}
+    constexpr Color(float p_r, float p_g, float p_b, float p_a)
+        : Base(p_r, p_g, p_b, p_a) {}
+    constexpr Color(float p_r, float p_g, float p_b)
+        : Base(p_r, p_g, p_b, 1.0f) {}
 
     uint32_t ToRgb() const;
     uint32_t ToRgba() const;

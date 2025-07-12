@@ -1,7 +1,7 @@
 #include "common_passes.h"
 
 #include "engine/algorithm/algorithm.h"
-#include "engine/assets/asset.h"
+#include "engine/assets/assets.h"
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/math/matrix_transform.h"
@@ -101,7 +101,8 @@ static void ExecuteDrawCommands(const FrameData& p_data, const std::vector<Rende
 struct ScopedEvent {
     IRenderCmdContext& m_ctx;
 
-    ScopedEvent(IRenderCmdContext& p_ctx, std::string_view p_name) : m_ctx(p_ctx) {
+    ScopedEvent(IRenderCmdContext& p_ctx, std::string_view p_name)
+        : m_ctx(p_ctx) {
         m_ctx.BeginEvent(p_name);
     }
 
@@ -479,7 +480,7 @@ static void EmitterPassFunc(RenderPassExcutionContext& p_ctx) {
 
         bool use_texture = false;
         if (!emitter.texture.empty()) {
-            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(emitter.texture);
+            const ImageAsset* image = AssetRegistry::GetSingleton().Request<ImageAsset>(emitter.texture);
             if (image && image->gpu_texture) {
                 cmd.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
                 use_texture = true;
@@ -557,8 +558,11 @@ void RenderGraphBuilderExt::AddLightingPass() {
     auto& pass = AddPass(RG_PASS_LIGHTING);
     // @TODO: dynamic
     pass.Import(RG_RES_BRDF, []() {
-            auto image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
+#if 0
+            auto image = AssetRegistry::GetSingleton().Request<ImageAsset>("@res://images/brdf.hdr");
             return IGraphicsManager::GetSingleton().CreateTexture(const_cast<ImageAsset*>(image));
+#endif
+            return nullptr;
         })
         .Import(RG_RES_LTC1, []() {
             return GenerateLTC(RG_RES_LTC1, LTC1);
@@ -937,9 +941,11 @@ void RenderGraphBuilderExt::AddGenerateSkylightPass() {
 
         auto& pass = AddPass(RG_PASS_BAKE_SKYBOX);
         pass.Import(RG_RES_IBL, []() {
-                AssetHandle handle{ "@res://images/ibl/circus.hdr" };
-                auto image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(handle);
+#if 0
+                auto image = AssetRegistry::GetSingleton().Request<ImageAsset>("@res://images/ibl/circus.hdr");
                 return IGraphicsManager::GetSingleton().CreateTexture(const_cast<ImageAsset*>(image));
+#endif
+                return nullptr;
             })
             .Create(RG_RES_ENV_SKYBOX_CUBE, { desc, CubemapSampler() })
             .Read(ResourceAccess::SRV, RG_RES_IBL)

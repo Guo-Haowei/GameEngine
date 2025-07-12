@@ -12,7 +12,8 @@ Texture2D t_BrdfLut : register(t4);
 
 #include "hlsl/lighting.hlsl"
 
-float4 main(VS_OUTPUT_MESH input) : SV_TARGET {
+float4 main(VS_OUTPUT_MESH input)
+    : SV_TARGET {
     const float2 texcoord = input.uv;
     const float4 world_position = mul(c_invCamView, float4(input.world_position, 1.0f));
 

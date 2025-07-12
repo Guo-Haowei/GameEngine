@@ -18,16 +18,14 @@ struct Quat {
     Quaternion value;
 };
 
-void SetPreloadFunc(lua_State* L) {
-
-    lua_getglobal(L, "package");
-    lua_getfield(L, -1, "searchers");
-
-    lua_pushcfunction(L, [](lua_State* L) -> int {
+static int CustomSearcher(lua_State* L) {
+    unused(L);
+    DEV_ASSERT(0);
+#if 0
         const char* path = luaL_checkstring(L, 1);
         auto asset = dynamic_cast<const TextAsset*>(
             AssetRegistry::GetSingleton()
-                .GetAssetByHandle(std::format("{}", path)));
+                .Request(std::format("{}", path)));
         if (!asset) {
             return 0;
         }
@@ -42,8 +40,14 @@ void SetPreloadFunc(lua_State* L) {
 
         auto error = std::format("error loading '{}'", path);
         lua_pushstring(L, error.c_str());
-        return 1;
-    });
+#endif
+    return 1;
+}
+
+void SetPreloadFunc(lua_State* L) {
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "searchers");
+    lua_pushcfunction(L, CustomSearcher);
     lua_rawseti(L, -2, 1);
 }
 
@@ -103,11 +107,11 @@ bool OpenInputLib(lua_State* L) {
         .beginNamespace("input")
         .addFunction("GetMouseMove", []() {
             CRASH_NOW();
-            //return InputManager::GetSingleton().MouseMove();
+            // return InputManager::GetSingleton().MouseMove();
         })
         .addFunction("GetCursor", []() -> Vector2f {
             CRASH_NOW();
-            //return InputManager::GetSingleton().GetCursor();
+            // return InputManager::GetSingleton().GetCursor();
             return Vector2f::Zero;
         })
         .endNamespace();
@@ -136,7 +140,7 @@ bool OpenEngineLib(lua_State* L) {
         })
         .addFunction("error", [](const char* p_file, int p_line, const char* p_error) {
             ReportErrorImpl("lua_function", p_file, p_line, p_error);
-            GENERATE_TRAP();                                                                                    
+            GENERATE_TRAP();
         })
         .endNamespace();
     return true;

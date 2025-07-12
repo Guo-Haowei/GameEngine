@@ -24,7 +24,8 @@ class DisplayManager : public Singleton<DisplayManager>,
                        public Module,
                        public ModuleCreateRegistry<DisplayManager> {
 public:
-    DisplayManager() : Module("DisplayManager") {}
+    DisplayManager()
+        : Module("DisplayManager") {}
 
     auto InitializeImpl() -> Result<void> final;
 

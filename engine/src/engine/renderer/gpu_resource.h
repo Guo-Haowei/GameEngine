@@ -117,7 +117,8 @@ struct GpuBufferDesc {
 struct GpuBuffer {
     const GpuBufferDesc desc;
 
-    GpuBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
+    GpuBuffer(const GpuBufferDesc& p_desc)
+        : desc(p_desc) {}
 
     virtual ~GpuBuffer() = default;
 
@@ -126,7 +127,8 @@ struct GpuBuffer {
 };
 
 struct GpuConstantBuffer {
-    GpuConstantBuffer(const GpuBufferDesc& p_desc) : desc(p_desc), capacity(desc.elementCount * desc.elementSize) {}
+    GpuConstantBuffer(const GpuBufferDesc& p_desc)
+        : desc(p_desc), capacity(desc.elementCount * desc.elementSize) {}
 
     virtual ~GpuConstantBuffer() = default;
 
@@ -140,7 +142,8 @@ struct GpuConstantBuffer {
 struct GpuStructuredBuffer {
     const GpuBufferDesc desc;
 
-    GpuStructuredBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
+    GpuStructuredBuffer(const GpuBufferDesc& p_desc)
+        : desc(p_desc) {}
 
     virtual ~GpuStructuredBuffer() = default;
 };
@@ -165,13 +168,15 @@ struct GpuMesh {
     std::array<std::shared_ptr<GpuBuffer>, MESH_MAX_VERTEX_BUFFER_COUNT> vertexBuffers;
 
     GpuMesh() = default;
-    GpuMesh(const GpuMeshDesc& p_desc) : desc(p_desc) {}
+    GpuMesh(const GpuMeshDesc& p_desc)
+        : desc(p_desc) {}
 
     virtual ~GpuMesh() = default;
 };
 
 struct GpuTexture {
-    GpuTexture(const GpuTextureDesc& p_desc) : desc(p_desc), slot(-1) {}
+    GpuTexture(const GpuTextureDesc& p_desc)
+        : desc(p_desc), slot(-1) {}
 
     virtual ~GpuTexture() = default;
 

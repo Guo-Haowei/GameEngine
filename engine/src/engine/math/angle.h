@@ -8,9 +8,12 @@ class Degree;
 
 class Degree {
 public:
-    explicit constexpr Degree() : m_value(0) {}
-    explicit constexpr Degree(float p_degree) : m_value(p_degree) {}
-    explicit constexpr Degree(double p_degree) : m_value(static_cast<float>(p_degree)) {}
+    explicit constexpr Degree()
+        : m_value(0) {}
+    explicit constexpr Degree(float p_degree)
+        : m_value(p_degree) {}
+    explicit constexpr Degree(double p_degree)
+        : m_value(static_cast<float>(p_degree)) {}
 
     Degree& operator=(const Radian& p_rad);
 
@@ -72,8 +75,10 @@ private:
 
 class Radian {
 public:
-    explicit constexpr Radian() : m_value(0) {}
-    explicit constexpr Radian(float p_angle) : m_value(p_angle) {}
+    explicit constexpr Radian()
+        : m_value(0) {}
+    explicit constexpr Radian(float p_angle)
+        : m_value(p_angle) {}
 
     Radian& operator=(const Degree& p_degree);
 

@@ -1,18 +1,27 @@
 #include "tilemap_panel.h"
 
+#include "engine/assets/assets.h"
 #include "editor/editor_layer.h"
 #include "editor/widget.h"
 #include "engine/runtime/asset_registry.h"
 
 namespace my {
 
-TileMapPanel::TileMapPanel(EditorLayer& p_editor) : EditorWindow("Tile Map", p_editor) {
+TileMapPanel::TileMapPanel(EditorLayer& p_editor)
+    : EditorWindow("Tile Map", p_editor) {
 }
 
 void TileMapPanel::OnAttach() {
     auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
-    m_tileset = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/tiles.png" });
-    m_checkerboard = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/checkerboard.jpg" });
+    {
+        auto res = asset_registry->Request("@res://images/tiles.png").Wait<ImageAsset>();
+        m_tileset = *res;
+    }
+    {
+        // @TODO: generate checkboard programatically
+        auto res = asset_registry->Request("@res://images/checkerboard.jpg").Wait<ImageAsset>();
+        m_checkerboard = *res;
+    }
 }
 
 void TileMapPanel::TilePaint() {
@@ -45,8 +54,7 @@ void TileMapPanel::TilePaint() {
             cursor,
             cursor + desired_size,
             ImVec2(0, 0), uv,
-            IM_COL32(255, 255, 255, 255)
-        );
+            IM_COL32(255, 255, 255, 255));
     }
 
     // Draw tileset
@@ -83,14 +91,14 @@ void TileMapPanel::TilePaint() {
 
     for (int dx = m_sep.x; dx < tile_size.x; dx += m_sep.x) {
         draw_list->AddLine(ImVec2(cursor.x + dx, cursor.y),
-                          ImVec2(cursor.x + dx, cursor.y + tile_size.y),
-                          IM_COL32(255, 255, 255, 255));
+                           ImVec2(cursor.x + dx, cursor.y + tile_size.y),
+                           IM_COL32(255, 255, 255, 255));
     }
 
     for (int dy = m_sep.y; dy < tile_size.y; dy += m_sep.y) {
         draw_list->AddLine(ImVec2(cursor.x, cursor.y + dy),
-                          ImVec2(cursor.x + tile_size.x, cursor.y + dy),
-                          IM_COL32(255, 255, 255, 255));
+                           ImVec2(cursor.x + tile_size.x, cursor.y + dy),
+                           IM_COL32(255, 255, 255, 255));
     }
 
     if (m_selected_x >= 0 && m_selected_y >= 0) {

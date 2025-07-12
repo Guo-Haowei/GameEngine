@@ -54,11 +54,11 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DebugReport(VkDebugReportFlagsEXT p_flags,
                                                   int32_t p_message_code,
                                                   const char* p_layer_prefix,
                                                   const char* p_message,
-                                                  void* p_user_data) {
+                                                  void* p_userdata) {
     unused(p_message_code);
     unused(p_object);
     unused(p_location);
-    unused(p_user_data);
+    unused(p_userdata);
     unused(p_layer_prefix);
 
     LogLevel level = LOG_LEVEL_VERBOSE;
@@ -344,7 +344,8 @@ static void FramePresent(ImGui_ImplVulkanH_Window* wd) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VulkanGraphicsManager::VulkanGraphicsManager() : GraphicsManager("VulkanGraphicsManager", Backend::VULKAN, NUM_FRAMES_IN_FLIGHT) {
+VulkanGraphicsManager::VulkanGraphicsManager()
+    : GraphicsManager("VulkanGraphicsManager", Backend::VULKAN, NUM_FRAMES_IN_FLIGHT) {
     m_pipelineStateManager = std::make_shared<EmptyPipelineStateManager>();
 }
 

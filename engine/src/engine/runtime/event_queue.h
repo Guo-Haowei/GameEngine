@@ -14,7 +14,8 @@ public:
 
 class SceneChangeEvent : public IEvent {
 public:
-    SceneChangeEvent(Scene* scene) : m_scene(scene) {}
+    SceneChangeEvent(Scene* scene)
+        : m_scene(scene) {}
 
     const Scene* GetScene() const { return m_scene; }
 
@@ -24,7 +25,8 @@ protected:
 
 class ResizeEvent : public IEvent {
 public:
-    ResizeEvent(int width, int height) : m_width(width), m_height(height) {}
+    ResizeEvent(int width, int height)
+        : m_width(width), m_height(height) {}
 
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }

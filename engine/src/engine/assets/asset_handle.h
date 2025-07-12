@@ -1,56 +1,31 @@
 #pragma once
+#include "asset_interface.h"
+#include "guid.h"
 
 namespace my {
 
+class AssetEntry;
+struct IAsset;
+
 struct AssetHandle {
-    constexpr AssetHandle() : hash(0) {}
+    Guid guid;
+    std::shared_ptr<AssetEntry> entry;
 
-    AssetHandle(const std::string& p_path) {
-#if USING(DEBUG_BUILD)
-        path = p_path;
-#endif
-        hash = std::hash<std::string>()(p_path);
+    bool IsValid() const { return !!entry; }
+
+    bool IsReady() const;
+    [[nodiscard]] auto Wait() const -> Result<AssetRef>;
+
+    template<typename T>
+    [[nodiscard]] auto Wait() -> Result<std::shared_ptr<T>> {
+        auto res = Wait();
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+
+        AssetRef ptr = *res;
+        return std::dynamic_pointer_cast<T>(ptr);
     }
-
-    bool operator==(const AssetHandle& p_rhs) const {
-        return hash == p_rhs.hash;
-    }
-
-    bool operator!=(const AssetHandle& p_rhs) const {
-        return hash == p_rhs.hash;
-    }
-
-    bool operator<(const AssetHandle& p_rhs) const {
-        return hash < p_rhs.hash;
-    }
-
-    bool operator<=(const AssetHandle& p_rhs) const {
-        return hash <= p_rhs.hash;
-    }
-
-    bool operator>(const AssetHandle& p_rhs) const {
-        return hash > p_rhs.hash;
-    }
-
-    bool operator>=(const AssetHandle& p_rhs) const {
-        return hash >= p_rhs.hash;
-    }
-
-    size_t hash;
-#if USING(DEBUG_BUILD)
-    std::string path;
-#endif
 };
 
 }  // namespace my
-
-namespace std {
-
-template<>
-struct hash<my::AssetHandle> {
-    std::size_t operator()(const my::AssetHandle& p_handle) const {
-        return p_handle.hash;
-    }
-};
-
-}  // namespace std

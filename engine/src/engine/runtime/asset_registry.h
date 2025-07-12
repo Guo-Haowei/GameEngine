@@ -1,78 +1,37 @@
 #pragma once
-#include "engine/assets/asset.h"
+#include "engine/assets/asset_entry.h"
+#include "engine/assets/asset_interface.h"
+#include "engine/assets/asset_handle.h"
 #include "engine/core/base/singleton.h"
-#include "engine/core/io/file_path.h"
 #include "engine/runtime/module.h"
 
 namespace my {
 
-struct AssetRegistryHandle {
-    enum State : uint8_t {
-        ASSET_STATE_LOADING,
-        ASSET_STATE_READY,
-    };
-
-    AssetRegistryHandle(const IAsset::Meta& p_meta) : meta(p_meta),
-                                                      asset(nullptr),
-                                                      state(ASSET_STATE_LOADING) {}
-
-    IAsset::Meta meta;
-    IAsset* asset;
-    std::atomic<State> state;
-};
-
 class AssetRegistry : public Singleton<AssetRegistry>, public Module {
-    enum RequestMode {
-        LOAD_ASYNC,
-        LOAD_SYNC,
-    };
-
 public:
-    AssetRegistry() : Module("AssetRegistry") {}
+    AssetRegistry()
+        : Module("AssetRegistry") {}
 
-    const IAsset* GetAssetByHandle(const AssetHandle& p_handle);
+    AssetHandle Request(const std::string& p_path);
 
+#if 0
     void GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out);
-
-    template<typename T>
-    const T* GetAssetByHandle(const AssetHandle& p_handle) {
-        const IAsset* tmp = GetAssetByHandle(p_handle);
-        if (tmp) {
-            const T* asset = dynamic_cast<const T*>(tmp);
-            if (DEV_VERIFY(asset)) {
-                return asset;
-            }
-        }
-        return nullptr;
-    }
-
-    void RegisterAssets(int p_count, IAsset::Meta* p_metas);
-
-    // @TODO: request certain type, if no such type, use default loader
-    auto RequestAssetSync(const std::string& p_path) {
-        return RequestAssetImpl(p_path, LOAD_SYNC, nullptr, nullptr);
-    }
-
-    auto RequestAssetAsync(const std::string& p_path,
-                           OnAssetLoadSuccessFunc p_on_success = nullptr,
-                           void* p_user_data = nullptr) {
-        return RequestAssetImpl(p_path, LOAD_ASYNC, p_on_success, p_user_data);
-    }
-
     void RemoveAsset(const std::string& p_path);
+#endif
 
 protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    auto RequestAssetImpl(const std::string& p_path,
-                          RequestMode p_mode,
-                          OnAssetLoadSuccessFunc p_on_success,
-                          void* p_user_data) -> Result<const IAsset*>;
+    bool StartAsyncLoad(AssetMetaData&& p_meta,
+                        OnAssetLoadSuccessFunc p_on_success,
+                        void* p_userdata);
 
-    std::unordered_map<AssetHandle, AssetRegistryHandle*> m_lookup;
-    std::vector<std::unique_ptr<AssetRegistryHandle>> m_handles;
-    std::mutex m_lock;
+    mutable std::mutex registry_mutex;
+    std::unordered_map<std::string, Guid> m_path_map;
+    std::unordered_map<Guid, std::shared_ptr<AssetEntry>> m_guid_map;
+
+    friend class AssetManager;
 };
 
 }  // namespace my

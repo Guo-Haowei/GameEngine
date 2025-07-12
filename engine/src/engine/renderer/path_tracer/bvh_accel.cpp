@@ -38,8 +38,8 @@ private:
 class BvhSorter {
 public:
     BvhSorter(int p_axis,
-              const BvhBuilder& p_builder) : m_axis(p_axis),
-                                             m_builder(p_builder) {}
+              const BvhBuilder& p_builder)
+        : m_axis(p_axis), m_builder(p_builder) {}
 
     bool operator()(uint32_t p_lhs, uint32_t p_rhs) const {
         auto aabb_1 = m_builder.m_aabbs.at(p_lhs);
@@ -55,8 +55,8 @@ private:
 };
 
 BvhBuilder::BvhBuilder(const VertexList& p_vertices,
-                       const TriangleList& p_triangles) : m_vertices(p_vertices),
-                                                          m_triangles(p_triangles) {
+                       const TriangleList& p_triangles)
+    : m_vertices(p_vertices), m_triangles(p_triangles) {
     m_aabbs.resize(m_triangles.size());
     m_centroids.resize(m_triangles.size());
     for (size_t i = 0; i < m_triangles.size(); ++i) {

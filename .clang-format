@@ -23,7 +23,6 @@ Cpp11BracedListStyle: false
 # DeriveLineEnding: false
 # IndentCaseLabels: true
 KeepEmptyLinesAtTheStartOfBlocks: true
-SortIncludes: true
 SpaceAfterTemplateKeyword: false
 # SpaceBeforeCpp11BracedList: false
 # SpacesInParentheses: true
@@ -44,3 +43,8 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 
 AlignAfterOpenBracket: true
+# SortIncludes: true
+SortIncludes: Never
+
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BreakConstructorInitializers: BeforeComma

@@ -7,7 +7,8 @@ class LinearIterator {
     using self_type = LinearIterator<T>;
 
 public:
-    explicit LinearIterator(T* ptr) : m_ptr(ptr) {}
+    explicit LinearIterator(T* ptr)
+        : m_ptr(ptr) {}
 
     self_type operator++(int) {
         LinearIterator<T> tmp = *this;

@@ -82,7 +82,8 @@ struct PipelineStateDesc {
 };
 
 struct PipelineState {
-    PipelineState(const PipelineStateDesc& p_desc) : desc(p_desc) {}
+    PipelineState(const PipelineStateDesc& p_desc)
+        : desc(p_desc) {}
 
     virtual ~PipelineState() = default;
 

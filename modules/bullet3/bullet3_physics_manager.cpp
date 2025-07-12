@@ -42,8 +42,8 @@ static btTransform ConvertTransform(const TransformComponent& p_transform) {
 
 struct CustomContactResultCallback : btCollisionWorld::ContactResultCallback {
     CustomContactResultCallback(Scene& p_scene,
-                                ScriptManager& p_scriptManager) : m_scene(p_scene),
-                                                                  m_scriptManager(p_scriptManager) {
+                                ScriptManager& p_scriptManager)
+        : m_scene(p_scene), m_scriptManager(p_scriptManager) {
     }
 
     btScalar addSingleResult(btManifoldPoint&, const btCollisionObjectWrapper* p_wrap_1, int, int, const btCollisionObjectWrapper* p_wrap_2, int, int) override {
@@ -63,7 +63,8 @@ struct CustomContactResultCallback : btCollisionWorld::ContactResultCallback {
 
 class CustomCollisionDispatcher : public btCollisionDispatcher {
 public:
-    CustomCollisionDispatcher(btCollisionConfiguration* p_config, Scene& p_scene) : btCollisionDispatcher(p_config), m_scene(p_scene) {
+    CustomCollisionDispatcher(btCollisionConfiguration* p_config, Scene& p_scene)
+        : btCollisionDispatcher(p_config), m_scene(p_scene) {
     }
 
     void dispatchAllCollisionPairs(btOverlappingPairCache* pairCache, const btDispatcherInfo& dispatchInfo, btDispatcher* dispatcher) override {

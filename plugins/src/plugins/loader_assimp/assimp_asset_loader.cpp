@@ -10,7 +10,7 @@
 
 namespace my {
 
-auto AssimpAssetLoader::Load() -> Result<IAsset*> {
+auto AssimpAssetLoader::Load() -> Result<AssetRef> {
     m_scene = new Scene;
     Assimp::Importer importer;
 
@@ -40,7 +40,7 @@ auto AssimpAssetLoader::Load() -> Result<IAsset*> {
     m_scene->GetComponent<NameComponent>(root)->SetName(m_meta.path);
 
     m_scene->m_root = root;
-    return m_scene;
+    return AssetRef(m_scene);
 }
 
 void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
@@ -59,7 +59,8 @@ void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
     std::string path = get_material_path(aiTextureType_DIFFUSE, 0);
     if (!path.empty()) {
         materialComponent->textures[MaterialComponent::TEXTURE_BASE].path = path;
-        AssetRegistry::GetSingleton().RequestAssetSync(path);
+        DEV_ASSERT(0);
+        //AssetRegistry::GetSingleton().RequestAssetSync(path);
     }
 
     path = get_material_path(aiTextureType_NORMALS, 0);
@@ -68,7 +69,8 @@ void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
     }
     if (!path.empty()) {
         materialComponent->textures[MaterialComponent::TEXTURE_NORMAL].path = path;
-        AssetRegistry::GetSingleton().RequestAssetSync(path);
+        DEV_ASSERT(0);
+        //AssetRegistry::GetSingleton().RequestAssetSync(path);
     }
 
 #if 0

@@ -523,7 +523,8 @@ void MaterialComponent::OnDeserialized() {
     for (int i = 0; i < TEXTURE_MAX; ++i) {
         const auto& path = textures[i].path;
         if (!path.empty()) {
-            AssetRegistry::GetSingleton().RequestAssetAsync(path);
+            DEV_ASSERT(0);
+            // AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
     }
 }

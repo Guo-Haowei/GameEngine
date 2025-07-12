@@ -4,6 +4,7 @@
 #include <imnodes/imnodes.h>
 
 #include "editor/panels/content_browser.h"
+#include "editor/panels/file_system_panel.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/log_panel.h"
 #include "editor/panels/menu_bar.h"
@@ -59,6 +60,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(m_viewer);
     AddPanel(std::make_shared<TileMapPanel>(*this));
     AddPanel(std::make_shared<RenderGraphViewer>(*this));
+    AddPanel(std::make_shared<FileSystemPanel>(*this));
 #if !USING(PLATFORM_WASM)
     AddPanel(std::make_shared<ContentBrowser>(*this));
 #endif

@@ -7,8 +7,10 @@ struct IntrusiveListNode {
     T data;
     IntrusiveListNode<T>* next;
 
-    IntrusiveListNode() : next(nullptr) {}
-    IntrusiveListNode(const T& data) : data(data), next(nullptr) {}
+    IntrusiveListNode()
+        : next(nullptr) {}
+    IntrusiveListNode(const T& data)
+        : data(data), next(nullptr) {}
 };
 
 template<typename T>
@@ -17,7 +19,8 @@ class IntrusiveListIterator {
     using node_type = IntrusiveListNode<T>;
 
 public:
-    IntrusiveListIterator(node_type* node) : m_node(node) {}
+    IntrusiveListIterator(node_type* node)
+        : m_node(node) {}
 
     this_type operator++(int) {
         this_type ret = *this;

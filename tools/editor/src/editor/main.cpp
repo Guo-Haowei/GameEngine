@@ -58,13 +58,10 @@ Application* CreateApplication() {
     root = StringUtils::BasePath(root);
 
     // @TODO: virtual fs and mount
-    auto res_path = fs::path{ root } / "resources";
-    auto res_string = res_path.string();
     auto user_path = fs::path{ root } / "user";
     auto user_string = user_path.string();
 
     ApplicationSpec spec{};
-    spec.resourceFolder = res_string;
     spec.userFolder = user_string;
     spec.name = "Editor";
     spec.width = 800;

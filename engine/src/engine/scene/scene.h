@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/assets/asset.h"
+#include "engine/assets/asset_interface.h"
 #include "engine/core/base/noncopyable.h"
 #include "engine/ecs/component_manager.h"
 #include "engine/ecs/view.h"
@@ -61,7 +61,8 @@ class Scene : public NonCopyable, public IAsset {
 public:
     static constexpr const char* EXTENSION = ".scene";
 
-    Scene() : IAsset(AssetType::SCENE) {}
+    Scene()
+        : IAsset(AssetType::Scene) {}
 
 public:
     template<Serializable T>

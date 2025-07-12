@@ -1,5 +1,7 @@
 #include "opengl_pipeline_state_manager.h"
 
+#include <fstream>
+
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_manager.h"
 #include "engine/runtime/asset_registry.h"
@@ -31,26 +33,23 @@ OpenGlPipelineState::~OpenGlPipelineState() {
     }
 }
 
+// @TODO: refactor this. Shader will be included as const char* directly
+static std::string ReadFileToString(const std::string &filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) return {};  // return empty string on failure
+
+    std::ostringstream ss;
+    ss << file.rdbuf();
+    return ss.str();
+}
+
 static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::string> {
     constexpr int max_depth = 100;
     if (p_depth >= max_depth) {
         return HBN_ERROR(ErrorCode::ERR_COMPILATION_FAILED, "circular includes in file '{}'!", p_path.string());
     }
 
-    const BufferAsset *source_handle = nullptr;
-    {
-        auto res = AssetRegistry::GetSingleton().RequestAssetSync(p_path.string());
-        if (!res) {
-            return HBN_ERROR(res.error());
-        }
-        source_handle = dynamic_cast<const BufferAsset *>(*res);
-    }
-
-    if (source_handle->buffer.empty()) {
-        return HBN_ERROR(ErrorCode::ERR_COMPILATION_FAILED, "file '{}' is empty", p_path.string());
-    }
-
-    std::string source(source_handle->buffer.begin(), source_handle->buffer.end());
+    std::string source = ReadFileToString(p_path.string());
 
     std::string final_string;
     std::stringstream ss(source);

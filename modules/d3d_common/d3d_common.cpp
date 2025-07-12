@@ -7,7 +7,6 @@
 #include <fstream>
 
 #include "engine/core/string/string_builder.h"
-#include "engine/runtime/asset_registry.h"
 
 #if USING(USE_D3D_DEBUG_NAME)
 #pragma comment(lib, "dxguid.lib")
@@ -30,6 +29,16 @@ HRESULT ReportErrorIfFailed(HRESULT p_result,
     return p_result;
 }
 
+// @TODO: refactor this. Shader will be included as const char* directly
+static std::string ReadFileToString(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file) return {};  // return empty string on failure
+
+    std::ostringstream ss;
+    ss << file.rdbuf();
+    return ss.str();
+}
+
 class D3DIncludeHandler : public ID3DInclude {
 public:
     STDMETHOD(Open)
@@ -37,21 +46,16 @@ public:
         // @TODO: fix search
         fs::path path = fs::path{ ROOT_FOLDER } / "engine/shader/" / p_file;
 
-        auto res = AssetRegistry::GetSingleton().RequestAssetSync(path.string());
-        if (!res) {
-            StringStreamBuilder builder;
-            builder << res.error();
-            LOG_ERROR("{}", builder.ToString());
-            return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-        }
+        m_includes.push_back(ReadFileToString(path.string()));
 
-        auto source_binary = dynamic_cast<const BufferAsset*>(*res);
-        if (source_binary->buffer.empty()) {
+        const auto& buffer = m_includes.back();
+
+        if (buffer.empty()) {
             LOG_ERROR("failed to read file '{}'", path.string());
         }
 
-        *p_out_data = source_binary->buffer.data();
-        *p_bytes = (UINT)source_binary->buffer.size();
+        *p_out_data = buffer.data();
+        *p_bytes = (UINT)buffer.size();
         return S_OK;
     }
 
@@ -59,6 +63,9 @@ public:
     (LPCVOID) override {
         return S_OK;
     }
+
+private:
+    std::list<std::string> m_includes;
 };
 
 auto CompileShader(std::string_view p_path,

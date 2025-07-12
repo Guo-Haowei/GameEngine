@@ -4,6 +4,7 @@
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/os/timer.h"
+#include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_registry.h"
@@ -19,7 +20,7 @@ auto SceneManager::InitializeImpl() -> Result<void> {
     m_scene = m_app->CreateInitialScene();
     BumpRevision();
 
-    const std::string& path = DVAR_GET_STRING(project);
+    const std::string& path = DVAR_GET_STRING(scene);
     if (!path.empty()) {
         RequestScene(path);
     }
@@ -72,23 +73,29 @@ void SceneManager::EnqueueSceneLoadingTask(Scene* p_scene, bool p_replace) {
 }
 
 void SceneManager::RequestScene(std::string_view p_path) {
-    FilePath path{ p_path };
+    fs::path path{ p_path };
 
-    std::string ext = path.Extension();
+    auto ext = StringUtils::Extension(p_path);
+
+    DEV_ASSERT(0);
     if (ext == ".yaml" || ext == ".scene") {
+#if 0
         AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](IAsset* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = dynamic_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
             SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, true);
         });
+#endif
     } else {
+#if 0
         AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](IAsset* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = dynamic_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
             SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, false);
         });
+#endif
     }
 }
 

@@ -11,7 +11,8 @@ class RingBufferIterator {
     using self_type = RingBufferIterator<T, N>;
 
 public:
-    RingBufferIterator(size_t index, T* ptr) : m_index(index), m_ptr(ptr) {}
+    RingBufferIterator(size_t index, T* ptr)
+        : m_index(index), m_ptr(ptr) {}
 
     self_type operator++(int) { return self_type(m_index++, m_ptr); }
 
