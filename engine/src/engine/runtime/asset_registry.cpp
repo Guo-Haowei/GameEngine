@@ -55,7 +55,7 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
 void AssetRegistry::FinalizeImpl() {
 }
 
-const IAsset* AssetRegistry::GetAssetByHandle(const std::string& p_handle) {
+const IAsset* AssetRegistry::Request(const std::string& p_handle) {
     std::lock_guard gurad(m_lock);
     auto it = m_lookup.find(p_handle);
     if (it == m_lookup.end()) {

@@ -20,10 +20,10 @@ void ContentBrowser::OnAttach() {
     m_currentPath = m_rootPath;
 
     auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
-    auto folder_icon = asset_registry->GetAssetByHandle<ImageAsset>("@res://images/icons/folder_icon.png");
-    auto image_icon = asset_registry->GetAssetByHandle<ImageAsset>("@res://images/icons/image_icon.png");
-    auto scene_icon = asset_registry->GetAssetByHandle<ImageAsset>("@res://images/icons/scene_icon.png");
-    auto meta_icon = asset_registry->GetAssetByHandle<ImageAsset>("@res://images/icons/meta_icon.png");
+    auto folder_icon = asset_registry->Request<ImageAsset>("@res://images/icons/folder_icon.png");
+    auto image_icon = asset_registry->Request<ImageAsset>("@res://images/icons/image_icon.png");
+    auto scene_icon = asset_registry->Request<ImageAsset>("@res://images/icons/scene_icon.png");
+    auto meta_icon = asset_registry->Request<ImageAsset>("@res://images/icons/meta_icon.png");
 
     m_iconMap["."] = { folder_icon, nullptr };
     m_iconMap[".png"] = { image_icon, nullptr };

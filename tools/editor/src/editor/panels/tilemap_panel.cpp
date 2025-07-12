@@ -11,8 +11,8 @@ TileMapPanel::TileMapPanel(EditorLayer& p_editor) : EditorWindow("Tile Map", p_e
 
 void TileMapPanel::OnAttach() {
     auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
-    m_tileset = asset_registry->GetAssetByHandle<ImageAsset>( "@res://images/tiles.png" );
-    m_checkerboard = asset_registry->GetAssetByHandle<ImageAsset>( "@res://images/checkerboard.jpg" );
+    m_tileset = asset_registry->Request<ImageAsset>( "@res://images/tiles.png" );
+    m_checkerboard = asset_registry->Request<ImageAsset>( "@res://images/checkerboard.jpg" );
 }
 
 void TileMapPanel::TilePaint() {

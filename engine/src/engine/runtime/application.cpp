@@ -179,14 +179,14 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
         fs::path project_setting = fs::path(m_projectFolder) / "project.yaml";
 
         std::ifstream file(project_setting.string());
-        if (!file.is_open()) {
-            return HBN_ERROR(ErrorCode::ERR_FILE_NOT_FOUND, "failed to open project '{}'", project_setting.string());
+        if (file.is_open()) {
+            // return HBN_ERROR(ErrorCode::ERR_FILE_NOT_FOUND, "failed to open project '{}'", project_setting.string());
+
+            YAML::Node node = YAML::Load(file);
+
+            bool is_2d = node["2d"].as<bool>();
+            DEV_ASSERT(is_2d);
         }
-
-        YAML::Node node = YAML::Load(file);
-
-        bool is_2d = node["2d"].as<bool>();
-        DEV_ASSERT(is_2d);
     }
 
     // select window size
@@ -439,7 +439,7 @@ Scene* Application::CreateInitialScene() {
 
         auto& sprite = tileMap->m_sprite;
 
-        sprite.texture = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>("@res://images/tiles.png");
+        sprite.texture = AssetRegistry::GetSingleton().Request<ImageAsset>("@res://images/tiles.png");
 
         const int grid_x = 3;
         const int grid_y = 2;

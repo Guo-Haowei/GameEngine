@@ -28,7 +28,7 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
         }
 
         // @TODO: at least fix this
-        const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(p_material->textures[p_idx].path);
+        const ImageAsset* image = AssetRegistry::GetSingleton().Request<ImageAsset>(p_material->textures[p_idx].path);
         if (!image) {
             return false;
         }

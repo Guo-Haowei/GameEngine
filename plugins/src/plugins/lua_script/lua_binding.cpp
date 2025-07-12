@@ -27,7 +27,7 @@ void SetPreloadFunc(lua_State* L) {
         const char* path = luaL_checkstring(L, 1);
         auto asset = dynamic_cast<const TextAsset*>(
             AssetRegistry::GetSingleton()
-                .GetAssetByHandle(std::format("{}", path)));
+                .Request(std::format("{}", path)));
         if (!asset) {
             return 0;
         }

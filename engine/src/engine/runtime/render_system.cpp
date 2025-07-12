@@ -136,7 +136,7 @@ static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
     for (auto const [entity, environment] : p_scene.View<EnvironmentComponent>()) {
         cache.c_ambientColor = environment.ambient.color;
         if (!environment.sky.texturePath.empty()) {
-            environment.sky.textureAsset = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(environment.sky.texturePath);
+            environment.sky.textureAsset = AssetRegistry::GetSingleton().Request<ImageAsset>(environment.sky.texturePath);
         }
     }
 

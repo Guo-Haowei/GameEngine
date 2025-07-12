@@ -17,13 +17,11 @@ public:
     AssetRegistry()
         : Module("AssetRegistry") {}
 
-    const IAsset* GetAssetByHandle(const std::string& p_handle);
-
-    void GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out);
+    const IAsset* Request(const std::string& p_handle);
 
     template<typename T>
-    const T* GetAssetByHandle(const std::string& p_handle) {
-        const IAsset* tmp = GetAssetByHandle(p_handle);
+    const T* Request(const std::string& p_handle) {
+        const IAsset* tmp = Request(p_handle);
         if (tmp) {
             const T* asset = dynamic_cast<const T*>(tmp);
             if (DEV_VERIFY(asset)) {
@@ -32,6 +30,8 @@ public:
         }
         return nullptr;
     }
+
+    void GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out);
 
     void RegisterAssets(int p_count, AssetMetaData* p_metas);
 
