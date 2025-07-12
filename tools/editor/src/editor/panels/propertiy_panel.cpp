@@ -251,11 +251,12 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             auto check_box_id = std::format("Enabled##{}", i);
             ImGui::Checkbox(check_box_id.c_str(), &texture.enabled);
 
-            const ImageAsset* image = AssetRegistry::GetSingleton().Request<ImageAsset>( texture.path );
-            auto gpu_texture = image ? image->gpu_texture : nullptr;
-            if (gpu_texture) {
-                ImGui::Image((ImTextureID)gpu_texture->GetHandle(), ImVec2(128, 128));
-            }
+            // auto image = AssetRegistry::GetSingleton().Request(texture.path);
+            //     //<ImageAsset>(texture.path);
+            // auto gpu_texture = image ? image->gpu_texture : nullptr;
+            // if (gpu_texture) {
+            //     ImGui::Image((ImTextureID)gpu_texture->GetHandle(), ImVec2(128, 128));
+            // }
         }
     });
 

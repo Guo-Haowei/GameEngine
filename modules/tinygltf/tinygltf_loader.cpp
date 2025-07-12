@@ -208,7 +208,8 @@ auto TinyGLTFLoader::Load() -> Result<IAsset*> {
             auto& img = m_model->images[img_source];
             const std::string path = m_basePath + img.uri;
             material.textures[MaterialComponent::TEXTURE_BASE].path = path;
-            AssetRegistry::GetSingleton().RequestAssetAsync(path);
+            DEV_ASSERT(0);
+            // AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
         if (normalTexture != x.additionalValues.end()) {
             auto& tex = m_model->textures[normalTexture->second.TextureIndex()];
@@ -219,7 +220,8 @@ auto TinyGLTFLoader::Load() -> Result<IAsset*> {
             auto& img = m_model->images[img_source];
             const std::string path = m_basePath + img.uri;
             material.textures[MaterialComponent::TEXTURE_NORMAL].path = path;
-            AssetRegistry::GetSingleton().RequestAssetAsync(path);
+            DEV_ASSERT(0);
+            // AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
         if (metallicRoughnessTexture != x.values.end()) {
             auto& tex = m_model->textures[metallicRoughnessTexture->second.TextureIndex()];
@@ -230,7 +232,8 @@ auto TinyGLTFLoader::Load() -> Result<IAsset*> {
             auto& img = m_model->images[img_source];
             const std::string path = m_basePath + img.uri;
             material.textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].path = path;
-            AssetRegistry::GetSingleton().RequestAssetAsync(path);
+            DEV_ASSERT(0);
+            // AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
 #if 0
 		if (emissiveTexture != x.additionalValues.end())

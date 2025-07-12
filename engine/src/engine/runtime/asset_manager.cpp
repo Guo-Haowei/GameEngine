@@ -36,21 +36,19 @@ namespace my {
 
 namespace fs = std::filesystem;
 
-struct LoadTask {
-    FilePath assetPath;
-    OnAssetLoadSuccessFunc onSuccess;
-    void* userdata;
-
-    // new stuff
+struct AssetManager::LoadTask {
     AssetEntry* handle;
+    OnAssetLoadSuccessFunc on_success;
+    void* userdata;
 };
 
+// @TODO: get rid of this?
 static struct {
     // @TODO: better wake up
     std::condition_variable wakeCondition;
     std::mutex wakeMutex;
     // @TODO: better thread safe queue
-    ConcurrentQueue<LoadTask> jobQueue;
+    ConcurrentQueue<AssetManager::LoadTask> jobQueue;
     std::atomic_int runningWorkers;
 } s_assetManagerGlob;
 
@@ -82,16 +80,12 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     return Result<void>();
 }
 
-auto AssetManager::LoadAssetSync(AssetEntry* p_handle) -> Result<IAsset*> {
-#if 0
-    if (thread::GetThreadId() == thread::THREAD_MAIN) {
-        LOG_WARN("Loading asset '{}' on main thread, this can be an expensive operation", p_handle->meta.path);
-    }
-#endif
+auto AssetManager::LoadAssetSync(const AssetEntry* p_entry) -> Result<IAsset*> {
+    DEV_ASSERT(thread::GetThreadId() != thread::THREAD_MAIN);
 
-    auto loader = IAssetLoader::Create(p_handle->metadata);
+    auto loader = IAssetLoader::Create(p_entry->metadata);
     if (!loader) {
-        return HBN_ERROR(ErrorCode::ERR_CANT_OPEN, "No suitable loader found for asset '{}'", p_handle->metadata.path);
+        return HBN_ERROR(ErrorCode::ERR_CANT_OPEN, "No suitable loader found for asset '{}'", p_entry->metadata.path);
     }
 
     auto res = loader->Load();
@@ -100,40 +94,28 @@ auto AssetManager::LoadAssetSync(AssetEntry* p_handle) -> Result<IAsset*> {
     }
 
     IAsset* asset = *res;
-    {
-        // @TODO: thread safe?
-        std::lock_guard lock(m_assetLock);
-        m_assets.emplace_back(std::unique_ptr<IAsset>(asset));
-        asset = m_assets.back().get();
-    }
-
-    p_handle->asset = std::shared_ptr<IAsset>(asset);
-    p_handle->metadata.type = asset->type;
-    p_handle->status = AssetStatus::Loaded;
 
     if (asset->type == AssetType::IMAGE) {
         ImageAsset* image = dynamic_cast<ImageAsset*>(asset);
 
         // @TODO: based on render, create asset on work threads
-        IGraphicsManager::GetSingleton().RequestTexture(image);
+        m_app->GetGraphicsManager()->RequestTexture(image);
     }
 
-    LOG_VERBOSE("asset {} loaded", p_handle->metadata.path);
+    LOG_VERBOSE("asset {} loaded", p_entry->metadata.path);
     return asset;
 }
 
 void AssetManager::LoadAssetAsync(AssetEntry* p_handle, OnAssetLoadSuccessFunc p_on_success, void* p_userdata) {
     LoadTask task;
     task.handle = p_handle;
-    task.onSuccess = p_on_success;
+    task.on_success = p_on_success;
     task.userdata = p_userdata;
     EnqueueLoadTask(task);
 }
 
 void AssetManager::FinalizeImpl() {
     RequestShutdown();
-
-    m_assets.clear();
 }
 
 void AssetManager::EnqueueLoadTask(LoadTask& p_task) {
@@ -161,23 +143,21 @@ void AssetManager::WorkerMain() {
 
         if (res) {
             IAsset* asset = *res;
-            if (task.onSuccess) {
-                task.onSuccess(asset, task.userdata);
+            if (task.on_success) {
+                task.on_success(asset, task.userdata);
             }
             LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.handle->metadata.path, timer.GetDurationString());
+
+            task.handle->MarkLoaded(std::shared_ptr<IAsset>(asset));
         } else {
             StringStreamBuilder builder;
             builder << res.error();
             LOG_ERROR("{}", builder.ToString());
+
+            task.handle->MarkFailed();
         }
 
         s_assetManagerGlob.runningWorkers.fetch_sub(1);
-    }
-}
-
-void AssetManager::Wait() {
-    while (s_assetManagerGlob.runningWorkers.load() != 0) {
-        // dummy for loop
     }
 }
 

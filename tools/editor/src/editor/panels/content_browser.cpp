@@ -11,7 +11,8 @@ namespace my {
 
 namespace fs = std::filesystem;
 
-ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Browser", p_editor) {
+ContentBrowser::ContentBrowser(EditorLayer& p_editor)
+    : EditorWindow("Content Browser", p_editor) {
 }
 
 void ContentBrowser::OnAttach() {
@@ -19,6 +20,7 @@ void ContentBrowser::OnAttach() {
     m_rootPath = fs::path{ path };
     m_currentPath = m_rootPath;
 
+#if 0
     auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
     auto folder_icon = asset_registry->Request<ImageAsset>("@res://images/icons/folder_icon.png");
     auto image_icon = asset_registry->Request<ImageAsset>("@res://images/icons/image_icon.png");
@@ -33,6 +35,7 @@ void ContentBrowser::OnAttach() {
     m_iconMap[".obj"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
     m_iconMap[".scene"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
     m_iconMap[".lua"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+#endif
 }
 
 void ContentBrowser::DrawSideBarHelper(const std::filesystem::path& p_path) {

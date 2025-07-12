@@ -6,7 +6,7 @@ namespace my {
 
 void BreakIfDebug();
 
-using ErrorHandlerFunc = void (*)(void* p_user_data,
+using ErrorHandlerFunc = void (*)(void* p_userdata,
                                   std::string_view p_function,
                                   std::string_view p_file,
                                   int p_line,

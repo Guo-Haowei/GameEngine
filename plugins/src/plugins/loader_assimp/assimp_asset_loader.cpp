@@ -59,7 +59,8 @@ void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
     std::string path = get_material_path(aiTextureType_DIFFUSE, 0);
     if (!path.empty()) {
         materialComponent->textures[MaterialComponent::TEXTURE_BASE].path = path;
-        AssetRegistry::GetSingleton().RequestAssetSync(path);
+        DEV_ASSERT(0);
+        //AssetRegistry::GetSingleton().RequestAssetSync(path);
     }
 
     path = get_material_path(aiTextureType_NORMALS, 0);
@@ -68,7 +69,8 @@ void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
     }
     if (!path.empty()) {
         materialComponent->textures[MaterialComponent::TEXTURE_NORMAL].path = path;
-        AssetRegistry::GetSingleton().RequestAssetSync(path);
+        DEV_ASSERT(0);
+        //AssetRegistry::GetSingleton().RequestAssetSync(path);
     }
 
 #if 0

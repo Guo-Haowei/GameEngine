@@ -75,20 +75,25 @@ void SceneManager::RequestScene(std::string_view p_path) {
     FilePath path{ p_path };
 
     std::string ext = path.Extension();
+    DEV_ASSERT(0);
     if (ext == ".yaml" || ext == ".scene") {
+#if 0
         AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](IAsset* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = dynamic_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
             SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, true);
         });
+#endif
     } else {
+#if 0
         AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](IAsset* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = dynamic_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
             SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, false);
         });
+#endif
     }
 }
 

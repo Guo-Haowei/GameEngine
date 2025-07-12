@@ -9,9 +9,8 @@ bool AssetHandle::IsReady() const {
 }
 
 std::shared_ptr<IAsset> AssetHandle::Wait() const {
-    CRASH_NOW();
-    return nullptr;
+    DEV_ASSERT(entry);
+    return entry->Wait();
 }
 
 }  // namespace my
-

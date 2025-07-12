@@ -1,8 +1,8 @@
 #include "asset_registry.h"
 
-#include <yaml-cpp/yaml.h>
-
 #include <fstream>
+#include <latch>
+#include <yaml-cpp/yaml.h>
 
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_manager.h"
@@ -18,53 +18,81 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
     fs::path always_load_path = assets_root / "alwaysload.yaml";
     std::ifstream file(always_load_path);
     if (file) {
-        YAML::Node node = YAML::Load(file);
+        return Result<void>();
+    }
 
-        const auto& files = node["files"];
-        if (!files.IsSequence()) {
-            return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "failed to parse {}, error: 'files' not found", always_load_path.string());
+    YAML::Node node = YAML::Load(file);
+
+    const auto& files = node["files"];
+    if (!files.IsSequence()) {
+        return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "failed to parse {}, error: 'files' not found", always_load_path.string());
+    }
+
+    // @TODO: instead of always load, parse meta instead
+
+    std::vector<std::string> asset_bundle;
+    for (const auto& item : files) {
+        const auto& path = item["path"];
+        if (!path.IsScalar()) {
+            CRASH_NOW();
         }
 
-        std::vector<AssetMetaData> asset_bundle;
-
-        for (const auto& item : files) {
-            const auto& path = item["path"];
-            if (!path.IsScalar()) {
-                CRASH_NOW();
-            }
-
-            AssetMetaData meta_data;
-            meta_data.path = path.as<std::string>();
-            if (!meta_data.path.empty()) {
-                asset_bundle.emplace_back(std::move(meta_data));
-            }
-        }
-
-        RegisterAssets((int)asset_bundle.size(), asset_bundle.data());
-
-        AssetManager* asset_manager = m_app->GetAssetManager();
-        for (auto& [key, stub] : m_lookup) {
-            if (auto res = asset_manager->LoadAssetSync(stub); !res) {
-                return HBN_ERROR(res.error());
-            }
+        auto path_string = path.as<std::string>();
+        if (!path_string.empty()) {
+            asset_bundle.emplace_back(std::move(path_string));
         }
     }
+
+    std::latch latch(asset_bundle.size());
+
+    for (const auto& path : asset_bundle) {
+        Request(path, [](IAsset* p_asset, void* p_userdata) {
+            unused(p_asset);
+            DEV_ASSERT(p_userdata);
+            std::latch& latch = *reinterpret_cast<std::latch*>(p_userdata);
+            latch.count_down(); }, &latch);
+    }
+
+    latch.wait();
     return Result<void>();
 }
 
 void AssetRegistry::FinalizeImpl() {
+    // @TODO: clean up all the stuff
 }
 
-const IAsset* AssetRegistry::Request(const std::string& p_handle) {
-    std::lock_guard gurad(m_lock);
-    auto it = m_lookup.find(p_handle);
-    if (it == m_lookup.end()) {
-        return nullptr;
+AssetHandle AssetRegistry::Request(const std::string& p_path,
+                                   OnAssetLoadSuccessFunc p_on_success,
+                                   void* p_userdata) {
+    // @TODO: normalize path
+
+    AssetMetaData meta;
+    meta.path = p_path;
+    meta.guid = Guid::Create();
+
+    {
+        std::lock_guard lock(registry_mutex);
+        auto it = path_map.find(p_path);
+        if (it != path_map.end()) {
+            return AssetHandle{ it->second->metadata.guid, it->second };
+        }
     }
 
-    return it->second->asset.get();
+    auto entry = std::make_shared<AssetEntry>(meta);
+    {
+        std::lock_guard lock(registry_mutex);
+        path_map[meta.path] = entry;
+        uuid_map[meta.guid] = entry;
+    }
+
+    // @TODO: async load entry
+
+    m_app->GetAssetManager()->LoadAssetAsync(entry.get(), p_on_success, p_userdata);
+
+    return { meta.guid, entry };
 }
 
+#if 0
 void AssetRegistry::GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out) {
     std::lock_guard gurad(m_lock);
     for (auto& it : m_handles) {
@@ -90,66 +118,6 @@ void AssetRegistry::RemoveAsset(const std::string& p_path) {
         }
     }
 }
-
-auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
-                                     RequestMode p_mode,
-                                     OnAssetLoadSuccessFunc p_on_success,
-                                     void* p_user_data) -> Result<const IAsset*> {
-    AssetMetaData meta;
-    meta.path = p_path;
-
-    std::lock_guard gurad(m_lock);
-    auto it = m_lookup.find(meta.path);
-    if (it != m_lookup.end()) {
-#if USING(DEBUG_BUILD)
-        // if (it->first != p_path) {
-        //     auto error = std::format("hash collision '{}' and '{}'", p_path, it->first.path);
-        //     CRASH_NOW_MSG(error);
-        // }
 #endif
-        return it->second->asset.get();
-    }
-
-    auto stub = new AssetEntry(std::move(meta));
-
-    m_lookup[p_path] = stub;
-    m_handles.emplace_back(std::unique_ptr<AssetEntry>(stub));
-
-    switch (p_mode) {
-        case AssetRegistry::LOAD_ASYNC: {
-            m_app->GetAssetManager()->LoadAssetAsync(stub, p_on_success, p_user_data);
-        } break;
-        case AssetRegistry::LOAD_SYNC: {
-            auto res = m_app->GetAssetManager()->LoadAssetSync(stub);
-            if (!res) {
-                return HBN_ERROR(res.error());
-            }
-        } break;
-        default:
-            CRASH_NOW();
-            break;
-    }
-
-    return stub->asset.get();
-}
-
-void AssetRegistry::RegisterAssets(int p_count, AssetMetaData* p_metas) {
-    DEV_ASSERT(p_count);
-
-    std::lock_guard gurad(m_lock);
-    for (int i = 0; i < p_count; ++i) {
-        auto handle = p_metas[i].path;
-        auto it = m_lookup.find(handle);
-        if (it != m_lookup.end()) {
-            CRASH_NOW();
-            return;
-        }
-
-        auto stub = new AssetEntry(std::move(p_metas[i]));
-
-        m_lookup[handle] = stub;
-        m_handles.emplace_back(std::unique_ptr<AssetEntry>(stub));
-    }
-}
 
 }  // namespace my

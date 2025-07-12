@@ -558,8 +558,11 @@ void RenderGraphBuilderExt::AddLightingPass() {
     auto& pass = AddPass(RG_PASS_LIGHTING);
     // @TODO: dynamic
     pass.Import(RG_RES_BRDF, []() {
+#if 0
             auto image = AssetRegistry::GetSingleton().Request<ImageAsset>("@res://images/brdf.hdr");
             return IGraphicsManager::GetSingleton().CreateTexture(const_cast<ImageAsset*>(image));
+#endif
+            return nullptr;
         })
         .Import(RG_RES_LTC1, []() {
             return GenerateLTC(RG_RES_LTC1, LTC1);
@@ -938,8 +941,11 @@ void RenderGraphBuilderExt::AddGenerateSkylightPass() {
 
         auto& pass = AddPass(RG_PASS_BAKE_SKYBOX);
         pass.Import(RG_RES_IBL, []() {
+#if 0
                 auto image = AssetRegistry::GetSingleton().Request<ImageAsset>("@res://images/ibl/circus.hdr");
                 return IGraphicsManager::GetSingleton().CreateTexture(const_cast<ImageAsset*>(image));
+#endif
+                return nullptr;
             })
             .Create(RG_RES_ENV_SKYBOX_CUBE, { desc, CubemapSampler() })
             .Read(ResourceAccess::SRV, RG_RES_IBL)

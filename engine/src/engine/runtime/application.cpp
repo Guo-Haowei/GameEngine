@@ -439,7 +439,9 @@ Scene* Application::CreateInitialScene() {
 
         auto& sprite = tileMap->m_sprite;
 
-        sprite.texture = AssetRegistry::GetSingleton().Request<ImageAsset>("@res://images/tiles.png");
+        auto image = m_assetRegistry->Request("@res://images/tiles.png");
+
+        sprite.texture = image.Wait<ImageAsset>().get();
 
         const int grid_x = 3;
         const int grid_y = 2;

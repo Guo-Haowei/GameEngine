@@ -7,13 +7,14 @@
 
 namespace my {
 
+class AssetEntry;
 class Scene;
 struct IAsset;
-struct LoadTask;
-struct AssetEntry;
 
 class AssetManager : public Singleton<AssetManager>, public Module {
 public:
+    struct LoadTask;
+
     AssetManager()
         : Module("AssetManager") {}
 
@@ -23,20 +24,17 @@ public:
     auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<IAsset>>;
 
     static void WorkerMain();
-    static void Wait();
     static void RequestShutdown();
 
 private:
-    [[nodiscard]] auto LoadAssetSync(AssetEntry* p_handle) -> Result<IAsset*>;
-
-    void LoadAssetAsync(AssetEntry* p_handle,
+    [[nodiscard]] auto LoadAssetSync(const AssetEntry* p_entry) -> Result<IAsset*>;
+    void LoadAssetAsync(AssetEntry* p_entry,
                         OnAssetLoadSuccessFunc p_on_success,
-                        void* p_user_data);
+                        void* p_userdata);
 
     void EnqueueLoadTask(LoadTask& p_task);
 
     std::mutex m_assetLock;
-    std::vector<std::unique_ptr<IAsset>> m_assets;
 
     friend class AssetRegistry;
 };

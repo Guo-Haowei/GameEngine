@@ -184,7 +184,10 @@ void LuaScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::
 
 Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, ObjectFunctions& p_meta) {
     auto asset_registry = m_app->GetAssetRegistry();
-    auto source = dynamic_cast<const TextAsset*>(asset_registry->Request(p_path));
+    auto handle = asset_registry->Request(p_path);
+    DEV_ASSERT(0);
+
+    auto source = dynamic_cast<const TextAsset*>(handle.Wait().get());
     if (!source) {
         return HBN_ERROR(ErrorCode::ERR_FILE_NOT_FOUND, "file {} not found", p_path);
     }
