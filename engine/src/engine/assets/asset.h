@@ -1,19 +1,11 @@
 #pragma once
-#include "asset_forward.h"
+#include "asset_interface.h"
 #include "asset_meta_data.h"
 
 #include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
 
 namespace my {
-
-struct IAsset {
-    IAsset(AssetType p_type)
-        : type(p_type) {}
-    virtual ~IAsset() = default;
-
-    const AssetType type;
-};
 
 struct BufferAsset : IAsset {
     BufferAsset()

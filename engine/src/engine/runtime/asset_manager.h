@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/assets/asset_forward.h"
+#include "engine/assets/asset_interface.h"
 #include "engine/core/base/concurrent_queue.h"
 #include "engine/core/base/singleton.h"
 #include "engine/core/io/file_path.h"

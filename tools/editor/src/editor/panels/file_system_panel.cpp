@@ -2,6 +2,7 @@
 
 #include <IconsFontAwesome/IconsFontAwesome6.h>
 
+#include "engine/assets/asset.h"
 #include "editor/editor_layer.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/common_dvars.h"

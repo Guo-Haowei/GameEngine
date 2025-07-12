@@ -1,4 +1,5 @@
 #include "engine/renderer/frame_data.h"
+#include "engine/assets/asset.h"
 #include "engine/scene/scene.h"
 
 namespace my {

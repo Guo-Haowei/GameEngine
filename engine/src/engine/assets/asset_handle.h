@@ -1,5 +1,5 @@
 #pragma once
-#include "asset_forward.h"
+#include "asset_interface.h"
 #include "guid.h"
 
 namespace my {

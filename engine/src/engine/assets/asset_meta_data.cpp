@@ -68,6 +68,9 @@ auto AssetMetaData::LoadMeta(std::string_view p_path) -> Result<AssetMetaData> {
         meta.type = *res;
     }
     meta.path = node["path"].as<std::string>();
+    if (meta.path != p_path) {
+        __debugbreak();
+    }
 
     return meta;
 }

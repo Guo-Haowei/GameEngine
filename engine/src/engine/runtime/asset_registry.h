@@ -1,6 +1,6 @@
 #pragma once
-#include "engine/assets/asset.h"
 #include "engine/assets/asset_entry.h"
+#include "engine/assets/asset_interface.h"
 #include "engine/assets/asset_handle.h"
 #include "engine/core/base/singleton.h"
 #include "engine/core/io/file_path.h"

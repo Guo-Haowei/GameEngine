@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/assets/asset.h"
+#include "engine/assets/asset_interface.h"
 #include "engine/core/base/noncopyable.h"
 #include "engine/ecs/component_manager.h"
 #include "engine/ecs/view.h"

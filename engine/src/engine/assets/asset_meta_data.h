@@ -3,10 +3,11 @@
 
 namespace my {
 
-#define ASSET_TYPE_LIST          \
-    ASSET_TYPE(Image, "image")   \
-    ASSET_TYPE(Binary, "binary") \
-    ASSET_TYPE(Text, "binary")   \
+#define ASSET_TYPE_LIST                     \
+    ASSET_TYPE(Image, "image")              \
+    ASSET_TYPE(Binary, "binary")            \
+    ASSET_TYPE(Text, "text")                \
+    ASSET_TYPE(SpriteSheet, "sprite_sheet") \
     ASSET_TYPE(Scene, "scene")
 
 class AssetType {

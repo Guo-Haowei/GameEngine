@@ -24,6 +24,9 @@
 #include "engine/runtime/script_manager.h"
 #include "engine/scene/scene.h"
 
+// @TODO: remove
+#include "engine/assets/asset.h"
+
 #define DEFINE_DVAR
 #include "engine/renderer/graphics_dvars.h"
 #undef DEFINE_DVAR

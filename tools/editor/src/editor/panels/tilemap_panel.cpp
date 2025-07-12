@@ -1,5 +1,6 @@
 #include "tilemap_panel.h"
 
+#include "engine/assets/asset.h"
 #include "editor/editor_layer.h"
 #include "editor/widget.h"
 #include "engine/runtime/asset_registry.h"

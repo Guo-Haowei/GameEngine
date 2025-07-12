@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include "engine/assets/asset.h"
 #include "engine/assets/asset_loader.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
