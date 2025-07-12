@@ -110,7 +110,6 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
     p_handle->asset = asset;
     p_handle->meta.type = asset->type;
     p_handle->state = AssetRegistryHandle::ASSET_STATE_READY;
-    asset->meta = p_handle->meta;
 
     if (asset->type == AssetType::IMAGE) {
         ImageAsset* image = dynamic_cast<ImageAsset*>(asset);
@@ -119,7 +118,7 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
         IGraphicsManager::GetSingleton().RequestTexture(image);
     }
 
-    LOG_VERBOSE("asset {} loaded", asset->meta.path);
+    LOG_VERBOSE("asset {} loaded", p_handle->meta.path);
     return asset;
 }
 

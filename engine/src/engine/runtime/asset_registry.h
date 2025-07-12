@@ -13,8 +13,8 @@ struct AssetRegistryHandle {
     };
 
     AssetRegistryHandle(const AssetMetaData& p_meta) : meta(p_meta),
-                                                      asset(nullptr),
-                                                      state(ASSET_STATE_LOADING) {}
+                                                       asset(nullptr),
+                                                       state(ASSET_STATE_LOADING) {}
 
     AssetMetaData meta;
     IAsset* asset;
@@ -30,12 +30,12 @@ class AssetRegistry : public Singleton<AssetRegistry>, public Module {
 public:
     AssetRegistry() : Module("AssetRegistry") {}
 
-    const IAsset* GetAssetByHandle(const AssetHandle& p_handle);
+    const IAsset* GetAssetByHandle(const std::string& p_handle);
 
     void GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out);
 
     template<typename T>
-    const T* GetAssetByHandle(const AssetHandle& p_handle) {
+    const T* GetAssetByHandle(const std::string& p_handle) {
         const IAsset* tmp = GetAssetByHandle(p_handle);
         if (tmp) {
             const T* asset = dynamic_cast<const T*>(tmp);
@@ -70,7 +70,7 @@ protected:
                           OnAssetLoadSuccessFunc p_on_success,
                           void* p_user_data) -> Result<const IAsset*>;
 
-    std::unordered_map<AssetHandle, AssetRegistryHandle*> m_lookup;
+    std::unordered_map<std::string, AssetRegistryHandle*> m_lookup;
     std::vector<std::unique_ptr<AssetRegistryHandle>> m_handles;
     std::mutex m_lock;
 };

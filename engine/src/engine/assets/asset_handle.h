@@ -1,7 +1,9 @@
 #pragma once
 
+#if 0
 namespace my {
 
+// @TODO: generate a hash at compile time?
 struct AssetHandle {
     constexpr AssetHandle() : hash(0) {}
 
@@ -54,3 +56,4 @@ struct hash<my::AssetHandle> {
 };
 
 }  // namespace std
+#endif

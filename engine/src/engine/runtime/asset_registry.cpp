@@ -36,7 +36,6 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
             AssetMetaData meta_data;
             meta_data.path = path.as<std::string>();
             if (!meta_data.path.empty()) {
-                meta_data.handle = meta_data.path;
                 asset_bundle.emplace_back(std::move(meta_data));
             }
         }
@@ -56,7 +55,7 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
 void AssetRegistry::FinalizeImpl() {
 }
 
-const IAsset* AssetRegistry::GetAssetByHandle(const AssetHandle& p_handle) {
+const IAsset* AssetRegistry::GetAssetByHandle(const std::string& p_handle) {
     std::lock_guard gurad(m_lock);
     auto it = m_lookup.find(p_handle);
     if (it == m_lookup.end()) {
@@ -97,17 +96,16 @@ auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
                                      OnAssetLoadSuccessFunc p_on_success,
                                      void* p_user_data) -> Result<const IAsset*> {
     AssetMetaData meta;
-    meta.handle = p_path;
     meta.path = p_path;
 
     std::lock_guard gurad(m_lock);
-    auto it = m_lookup.find(meta.handle);
+    auto it = m_lookup.find(meta.path);
     if (it != m_lookup.end()) {
 #if USING(DEBUG_BUILD)
-        if (it->first.path != p_path) {
-            auto error = std::format("hash collision '{}' and '{}'", p_path, it->first.path);
-            CRASH_NOW_MSG(error);
-        }
+        // if (it->first != p_path) {
+        //     auto error = std::format("hash collision '{}' and '{}'", p_path, it->first.path);
+        //     CRASH_NOW_MSG(error);
+        // }
 #endif
         return it->second->asset;
     }
@@ -140,8 +138,7 @@ void AssetRegistry::RegisterAssets(int p_count, AssetMetaData* p_metas) {
 
     std::lock_guard gurad(m_lock);
     for (int i = 0; i < p_count; ++i) {
-        auto handle = p_metas[i].handle;
-        DEV_ASSERT(handle.hash);
+        auto handle = p_metas[i].path;
         auto it = m_lookup.find(handle);
         if (it != m_lookup.end()) {
             CRASH_NOW();

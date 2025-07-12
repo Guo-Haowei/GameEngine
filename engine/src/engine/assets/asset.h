@@ -17,14 +17,10 @@ enum class AssetType : uint8_t {
 };
 
 struct IAsset {
-
     IAsset(AssetType p_type) : type(p_type) {}
     virtual ~IAsset() = default;
 
     const AssetType type;
-
-    // @TODO: find a more efficient way
-    AssetMetaData meta;
 };
 
 using OnAssetLoadSuccessFunc = void (*)(IAsset* p_asset, void* p_userdata);

@@ -190,8 +190,8 @@ Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_
     }
 
     if (luaL_dostring(L, source->source.c_str()) != LUA_OK) {
-        LOG_ERROR("failed to execute script '{}', error: '{}'", source->meta.path, lua_tostring(L, -1));
-        return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to execute script '{}'", source->meta.path);
+        LOG_ERROR("failed to execute script '{}', error: '{}'", source->source, lua_tostring(L, -1));
+        return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED);
     }
 
     // check if function exists
