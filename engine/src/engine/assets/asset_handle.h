@@ -11,6 +11,8 @@ struct AssetHandle {
     Guid guid;
     std::shared_ptr<AssetEntry> entry;
 
+    bool IsValid() const { return !!entry; }
+
     bool IsReady() const;
     [[nodiscard]] auto Wait() const -> Result<AssetRef>;
 

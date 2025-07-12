@@ -10,17 +10,15 @@ namespace my {
 
 namespace fs = std::filesystem;
 
-enum class AssetType : uint8_t;
-
-static const char* ToString(enum AssetType p_type) {
-    static const char* s_table[] = {
+const char* AssetType::ToString() const {
+    static constexpr const char* s_table[] = {
 #define ASSET_TYPE(ENUM, NAME) NAME,
         ASSET_TYPE_LIST
 #undef ASSET_TYPE
     };
     static_assert(array_length(s_table) == std::to_underlying(AssetType::Count));
 
-    return s_table[std::to_underlying(p_type)];
+    return s_table[std::to_underlying(m_type)];
 }
 
 static Result<AssetType> ParseAssetType(std::string_view p_string) {
@@ -69,6 +67,7 @@ auto AssetMetaData::LoadMeta(std::string_view p_path) -> Result<AssetMetaData> {
         }
         meta.type = *res;
     }
+    meta.path = node["path"].as<std::string>();
 
     return meta;
 }
@@ -105,7 +104,8 @@ auto AssetMetaData::SaveMeta(std::string_view p_path) const -> Result<void> {
 
     out << YAML::BeginMap;
     out << YAML::Key << "guid" << YAML::Value << guid.ToString();
-    out << YAML::Key << "type" << YAML::Value << ToString(type);
+    out << YAML::Key << "type" << YAML::Value << type.ToString();
+    out << YAML::Key << "path" << YAML::Value << path;
     out << YAML::EndMap;
 
     if (!out.good()) {

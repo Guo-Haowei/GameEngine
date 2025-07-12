@@ -7,19 +7,6 @@
 
 namespace my {
 
-#define ASSET_TYPE_LIST          \
-    ASSET_TYPE(Image, "image")   \
-    ASSET_TYPE(Binary, "binary") \
-    ASSET_TYPE(Text, "binary")   \
-    ASSET_TYPE(Scene, "scene")
-
-enum class AssetType : uint8_t {
-#define ASSET_TYPE(ENUM, ...) ENUM,
-    ASSET_TYPE_LIST
-#undef ASSET_TYPE
-        Count,
-};
-
 struct IAsset {
     IAsset(AssetType p_type)
         : type(p_type) {}

@@ -16,8 +16,11 @@ protected:
 
     void ListFile(const std::filesystem::path& p_path, const char* p_name_override = nullptr);
 
-    // @TODO: use FilePath
-    std::filesystem::path m_rootPath;
+    void ShowResourceToolTip(const std::string& p_path);
+
+    void FolderPopup(const std::filesystem::path& p_path);
+
+    std::filesystem::path m_root;
 };
 
 }  // namespace my

@@ -21,9 +21,14 @@ public:
     };
 
     enum ModeFlags : uint8_t {
-        NONE = 0,
-        READ = 1,
-        WRITE = 2,
+        NONE = BIT(0),
+        READ = BIT(1),
+        WRITE = BIT(2),
+        CREATE = BIT(3),
+        TRUNCATE = BIT(4),
+        EXCLUSIVE = BIT(5),
+
+        READ_WRITE = READ | WRITE,
     };
 
     virtual ~FileAccess() = default;
@@ -82,7 +87,7 @@ public:
         s_createFuncs[p_access_type] = CreateBuiltin<T>;
     }
 
-    static std::string FixPath(AccessType, std::string_view p_path);
+    static std::string FixPath(AccessType p_access_type, std::string_view p_path);
 
 protected:
     FileAccess() = default;
@@ -104,5 +109,7 @@ private:
     static GetUserFolderFunc s_getUserFolderFunc;
     static GetResourceFolderFunc s_getResourceFolderFunc;
 };
+
+DEFINE_ENUM_BITWISE_OPERATIONS(FileAccess::ModeFlags);
 
 }  // namespace my

@@ -2,21 +2,43 @@
 
 namespace my {
 
+namespace fs = std::filesystem;
+
 FileAccessUnix::~FileAccessUnix() { Close(); }
 
-auto FileAccessUnix::OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) -> Result<void> {
-    ERR_FAIL_COND_V(m_fileHandle, HBN_ERROR(ErrorCode::ERR_FILE_ALREADY_IN_USE, "file '{}' already in use", p_path));
+static const char* ResolveFlag(FileAccess::ModeFlags p_access) {
+    const bool read = p_access & FileAccess::READ;
+    const bool write = p_access & FileAccess::WRITE;
+    const bool trunc = p_access & FileAccess::TRUNCATE;
+    const bool create = p_access & FileAccess::CREATE;
 
-    const char* mode = "";
-    switch (p_mode_flags) {
-        case READ:
-            mode = "rb";
-            break;
-        case WRITE:
-            mode = "wb";
-            break;
-        default:
-            return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown mode '{}'", mode);
+    if (read && write) {
+        if (trunc || create) {
+            return "w+b";
+        }
+        return "r+b";
+    }
+    if (read) {
+        return "rb";
+    }
+    if (write) {
+        return "wb";
+    }
+    return nullptr;
+}
+
+auto FileAccessUnix::OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) -> Result<void> {
+    DEV_ASSERT(!m_fileHandle);
+
+    if (p_mode_flags & EXCLUSIVE) {
+        if (fs::exists(p_path)) {
+            return HBN_ERROR(ErrorCode::ERR_FILE_ALREADY_IN_USE, "file '{}' already in use", p_path);
+        }
+    }
+
+    const char* mode = ResolveFlag(p_mode_flags);
+    if (!mode) {
+        return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "invalid mode");
     }
 
     std::string path_string{ p_path };
@@ -54,14 +76,14 @@ size_t FileAccessUnix::GetLength() const {
 }
 
 size_t FileAccessUnix::ReadBuffer(void* p_data, size_t p_size) const {
-    DEV_ASSERT(m_openMode == READ);
+    DEV_ASSERT(m_openMode & READ);
 
     ERR_FAIL_COND_V(!IsOpen(), 0);
     return fread(p_data, 1, p_size, m_fileHandle);
 }
 
 size_t FileAccessUnix::WriteBuffer(const void* p_data, size_t p_size) {
-    DEV_ASSERT(m_openMode == WRITE);
+    DEV_ASSERT(m_openMode & WRITE);
 
     ERR_FAIL_COND_V(!IsOpen(), 0);
     return fwrite(p_data, 1, p_size, m_fileHandle);
