@@ -20,7 +20,7 @@ public:
         return std::make_unique<TinyGLTFLoader>(p_meta);
     }
 
-    auto Load() -> Result<IAsset*> override;
+    auto Load() -> Result<AssetRef> override;
 
 protected:
     void ProcessNode(int p_node_index, ecs::Entity p_parent);

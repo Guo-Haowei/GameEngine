@@ -142,7 +142,7 @@ void TinyGLTFLoader::ProcessNode(int p_node_index, ecs::Entity p_parent) {
     }
 }
 
-auto TinyGLTFLoader::Load() -> Result<IAsset*> {
+auto TinyGLTFLoader::Load() -> Result<AssetRef> {
     m_scene = new Scene;
 
     tinygltf::TinyGLTF loader;
@@ -321,7 +321,7 @@ auto TinyGLTFLoader::Load() -> Result<IAsset*> {
     // Create cameras:
 
     m_scene->m_root = root;
-    return m_scene;
+    return AssetRef(m_scene);
 }
 
 void TinyGLTFLoader::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {

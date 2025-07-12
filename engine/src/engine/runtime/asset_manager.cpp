@@ -80,7 +80,7 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     return Result<void>();
 }
 
-auto AssetManager::LoadAssetSync(const AssetEntry* p_entry) -> Result<IAsset*> {
+auto AssetManager::LoadAssetSync(const AssetEntry* p_entry) -> Result<AssetRef> {
     DEV_ASSERT(thread::GetThreadId() != thread::THREAD_MAIN);
 
     auto loader = IAssetLoader::Create(p_entry->metadata);
@@ -93,13 +93,13 @@ auto AssetManager::LoadAssetSync(const AssetEntry* p_entry) -> Result<IAsset*> {
         return HBN_ERROR(res.error());
     }
 
-    IAsset* asset = *res;
+    AssetRef asset = *res;
 
     if (asset->type == AssetType::IMAGE) {
-        ImageAsset* image = dynamic_cast<ImageAsset*>(asset);
+        auto image = std::dynamic_pointer_cast<ImageAsset>(asset);
 
         // @TODO: based on render, create asset on work threads
-        m_app->GetGraphicsManager()->RequestTexture(image);
+        m_app->GetGraphicsManager()->RequestTexture(image.get());
     }
 
     LOG_VERBOSE("asset {} loaded", p_entry->metadata.path);
@@ -142,13 +142,13 @@ void AssetManager::WorkerMain() {
         auto res = AssetManager::GetSingleton().LoadAssetSync(task.handle);
 
         if (res) {
-            IAsset* asset = *res;
+            AssetRef asset = *res;
             if (task.on_success) {
                 task.on_success(asset, task.userdata);
             }
             LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.handle->metadata.path, timer.GetDurationString());
 
-            task.handle->MarkLoaded(std::shared_ptr<IAsset>(asset));
+            task.handle->MarkLoaded(asset);
         } else {
             StringStreamBuilder builder;
             builder << res.error();

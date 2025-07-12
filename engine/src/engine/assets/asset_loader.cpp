@@ -40,7 +40,7 @@ std::unique_ptr<IAssetLoader> IAssetLoader::Create(const AssetMetaData& p_meta) 
     return it->second(p_meta);
 }
 
-auto BufferAssetLoader::Load() -> Result<IAsset*> {
+auto BufferAssetLoader::Load() -> Result<AssetRef> {
     auto res = FileAccess::Open(m_meta.path, FileAccess::READ);
     if (!res) {
         return HBN_ERROR(res.error());
@@ -55,10 +55,10 @@ auto BufferAssetLoader::Load() -> Result<IAsset*> {
     file_access->ReadBuffer(buffer.data(), size);
     auto file = new BufferAsset;
     file->buffer = std::move(buffer);
-    return file;
+    return AssetRef(file);
 }
 
-auto TextAssetLoader::Load() -> Result<IAsset*> {
+auto TextAssetLoader::Load() -> Result<AssetRef> {
     auto res = FileAccess::Open(m_meta.path, FileAccess::READ);
     if (!res) {
         return HBN_ERROR(res.error());
@@ -73,7 +73,7 @@ auto TextAssetLoader::Load() -> Result<IAsset*> {
 
     auto file = new TextAsset;
     file->source = std::string(buffer.begin(), buffer.end());
-    return file;
+    return AssetRef(file);
 }
 
 static PixelFormat ChannelToFormat(int p_channel, bool p_is_float) {
@@ -92,7 +92,7 @@ static PixelFormat ChannelToFormat(int p_channel, bool p_is_float) {
     }
 }
 
-auto ImageAssetLoader::Load() -> Result<IAsset*> {
+auto ImageAssetLoader::Load() -> Result<AssetRef> {
     auto res = FileAccess::Open(m_meta.path, FileAccess::READ);
     if (!res) {
         return HBN_ERROR(res.error());
@@ -154,11 +154,11 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
     p_image->height = height;
     p_image->num_channels = num_channels;
     p_image->buffer = std::move(buffer);
-    return p_image;
+    return AssetRef(p_image);
 }
 
 // @TODO: use same loader for both
-auto SceneLoader::Load() -> Result<IAsset*> {
+auto SceneLoader::Load() -> Result<AssetRef> {
     Scene* scene = new Scene;
     auto res = LoadSceneBinary(m_filePath, *scene);
     if (!res) {
@@ -167,11 +167,11 @@ auto SceneLoader::Load() -> Result<IAsset*> {
     }
 
     scene->m_replace = true;
-    return scene;
+    return AssetRef(scene);
 }
 
 // @TODO: use same loader for both
-auto TextSceneLoader::Load() -> Result<IAsset*> {
+auto TextSceneLoader::Load() -> Result<AssetRef> {
     Scene* scene = new Scene;
     auto res = LoadSceneText(m_filePath, *scene);
     if (!res) {
@@ -180,7 +180,7 @@ auto TextSceneLoader::Load() -> Result<IAsset*> {
     }
 
     scene->m_replace = true;
-    return scene;
+    return AssetRef(scene);
 }
 
 }  // namespace my

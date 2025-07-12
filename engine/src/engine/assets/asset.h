@@ -25,8 +25,6 @@ struct IAsset {
     const AssetType type;
 };
 
-using OnAssetLoadSuccessFunc = void (*)(IAsset* p_asset, void* p_userdata);
-
 struct BufferAsset : IAsset {
     BufferAsset()
         : IAsset(AssetType::BUFFER) {}

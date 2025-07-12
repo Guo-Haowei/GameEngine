@@ -14,7 +14,7 @@ public:
 
     virtual ~IAssetLoader() = default;
 
-    [[nodiscard]] virtual auto Load() -> Result<IAsset*> = 0;
+    [[nodiscard]] virtual auto Load() -> Result<AssetRef> = 0;
 
     static bool RegisterLoader(const std::string& p_extension, CreateLoaderFunc p_func);
 
@@ -39,7 +39,7 @@ public:
         return std::make_unique<BufferAssetLoader>(p_meta);
     }
 
-    auto Load() -> Result<IAsset*> override;
+    auto Load() -> Result<AssetRef> override;
 };
 
 class TextAssetLoader : public IAssetLoader {
@@ -50,7 +50,7 @@ public:
         return std::make_unique<TextAssetLoader>(p_meta);
     }
 
-    auto Load() -> Result<IAsset*> override;
+    auto Load() -> Result<AssetRef> override;
 };
 
 class ImageAssetLoader : public IAssetLoader {
@@ -66,7 +66,7 @@ public:
         return std::make_unique<ImageAssetLoader>(p_meta, 4);
     }
 
-    auto Load() -> Result<IAsset*> override;
+    auto Load() -> Result<AssetRef> override;
 
 protected:
     const uint32_t m_size;
@@ -80,7 +80,7 @@ public:
         return std::make_unique<SceneLoader>(p_meta);
     }
 
-    auto Load() -> Result<IAsset*> override;
+    auto Load() -> Result<AssetRef> override;
 };
 
 class TextSceneLoader : public IAssetLoader {
@@ -91,7 +91,7 @@ public:
         return std::make_unique<TextSceneLoader>(p_meta);
     }
 
-    auto Load() -> Result<IAsset*> override;
+    auto Load() -> Result<AssetRef> override;
 };
 
 }  // namespace my

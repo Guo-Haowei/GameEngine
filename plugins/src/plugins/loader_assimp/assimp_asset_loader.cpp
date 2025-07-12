@@ -10,7 +10,7 @@
 
 namespace my {
 
-auto AssimpAssetLoader::Load() -> Result<IAsset*> {
+auto AssimpAssetLoader::Load() -> Result<AssetRef> {
     m_scene = new Scene;
     Assimp::Importer importer;
 
@@ -40,7 +40,7 @@ auto AssimpAssetLoader::Load() -> Result<IAsset*> {
     m_scene->GetComponent<NameComponent>(root)->SetName(m_meta.path);
 
     m_scene->m_root = root;
-    return m_scene;
+    return AssetRef(m_scene);
 }
 
 void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {

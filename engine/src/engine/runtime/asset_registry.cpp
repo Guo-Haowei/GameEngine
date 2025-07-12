@@ -46,7 +46,7 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
     std::latch latch(asset_bundle.size());
 
     for (const auto& path : asset_bundle) {
-        Request(path, [](IAsset* p_asset, void* p_userdata) {
+        Request(path, [](AssetRef p_asset, void* p_userdata) {
             unused(p_asset);
             DEV_ASSERT(p_userdata);
             std::latch& latch = *reinterpret_cast<std::latch*>(p_userdata);

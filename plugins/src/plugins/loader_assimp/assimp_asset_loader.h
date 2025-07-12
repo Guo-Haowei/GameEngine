@@ -25,7 +25,7 @@ public:
         return std::make_unique<AssimpAssetLoader>(p_meta);
     }
 
-    auto Load() -> Result<IAsset*> override;
+    auto Load() -> Result<AssetRef> override;
 
 protected:
     void ProcessMaterial(aiMaterial& p_material);

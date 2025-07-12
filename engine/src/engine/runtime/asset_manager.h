@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/assets/asset.h"
+#include "engine/assets/asset_forward.h"
 #include "engine/core/base/concurrent_queue.h"
 #include "engine/core/base/singleton.h"
 #include "engine/core/io/file_path.h"
@@ -9,7 +9,6 @@ namespace my {
 
 class AssetEntry;
 class Scene;
-struct IAsset;
 
 class AssetManager : public Singleton<AssetManager>, public Module {
 public:
@@ -21,13 +20,13 @@ public:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<IAsset>>;
+    auto LoadFileSync(const FilePath& p_path) -> Result<AssetRef>;
 
     static void WorkerMain();
     static void RequestShutdown();
 
 private:
-    [[nodiscard]] auto LoadAssetSync(const AssetEntry* p_entry) -> Result<IAsset*>;
+    [[nodiscard]] auto LoadAssetSync(const AssetEntry* p_entry) -> Result<AssetRef>;
     void LoadAssetAsync(AssetEntry* p_entry,
                         OnAssetLoadSuccessFunc p_on_success,
                         void* p_userdata);
